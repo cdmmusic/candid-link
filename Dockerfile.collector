@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 빌드 도구 및 필요한 패키지 설치
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 필요한 패키지 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir libsql-experimental requests
+
+# 스크립트 복사
+COPY scripts/ ./scripts/
+
+# 환경 변수
+ENV PYTHONUNBUFFERED=1
+
+# 자동 수집 스크립트 실행
+CMD ["python3", "scripts/auto_collect_all.py"]

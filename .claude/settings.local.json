@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker logs:*)",
+      "Bash(cat:*)",
+      "Bash(curl -s 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v1/search/all?query=%EC%9D%B4%ED%98%81%EC%9E%AC%20AGIT' -H 'accept: application/json' -H 'user-agent: Mozilla/5.0')",
+      "Bash(curl -s 'https://www.music-flo.com/api/search/v2/search?keyword=%EC%9D%B4%ED%98%81%EC%9E%AC+AGIT&searchType=ALBUM&sortType=ACCURACY&size=20&page=1' -H 'user-agent: Mozilla/5.0')",
+      "Bash(curl -s 'https://apis.naver.com/vibeWeb/musicapiweb/vibe/v3/search?query=%EC%9D%B4%ED%98%81%EC%9E%AC%20AGIT' -H 'user-agent: Mozilla/5.0')",
+      "Bash(curl -s 'https://apis.naver.com/vibeWeb/musicapiweb/v4/searchall?query=%EC%9D%B4%ED%98%81%EC%9E%AC%20AGIT&sort=RELEVANCE&vidDisplay=25&trDisplay=9&alDisplay=21&arDisplay=21' -H 'accept: application/json' -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' -H 'referer: https://vibe.naver.com/' -H 'origin: https://vibe.naver.com')",
+      "Bash(curl:*)",
+      "Bash(bash:*)",
+      "Bash(docker restart:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

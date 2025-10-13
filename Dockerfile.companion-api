@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 시스템 패키지 설치
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 패키지 설치
+RUN pip install --no-cache-dir \
+    flask \
+    selenium \
+    requests
+
+# Companion API 복사
+COPY companion_api.py .
+
+# 환경 변수
+ENV FLASK_ENV=production
+ENV SELENIUM_HUB=http://selenium-chrome:4444
+ENV PYTHONUNBUFFERED=1
+
+# 포트 노출
+EXPOSE 5001
+
+# Flask 서버 실행
+CMD ["python3", "companion_api.py"]
