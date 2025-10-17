@@ -23,6 +23,10 @@
   --border-color: #dee2e6;
   --border-light: #f1f3f5;
 
+  /* Gradients */
+  --gradient-start: #667eea;
+  --gradient-end: #764ba2;
+
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -317,6 +321,12 @@ body {
    섹션 블록
    ======================================== */
 
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
 .section {
   max-width: 1400px;
   margin: var(--spacing-2xl) auto;
@@ -610,6 +620,109 @@ body {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* Skeleton UI Components */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-ranking-item {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-ranking-number {
+  width: 60px;
+  height: 40px;
+}
+
+.skeleton-ranking-cover {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.skeleton-ranking-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-ranking-title {
+  height: 20px;
+  width: 60%;
+}
+
+.skeleton-ranking-artist {
+  height: 16px;
+  width: 40%;
+}
+
+.skeleton-ranking-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.skeleton-ranking-platforms {
+  height: 16px;
+  width: 80px;
+}
+
+.skeleton-ranking-date {
+  height: 14px;
+  width: 100px;
+}
+
+.skeleton-album-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-album-cover {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.skeleton-album-info {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-album-title {
+  height: 18px;
+  width: 80%;
+}
+
+.skeleton-album-artist {
+  height: 16px;
+  width: 60%;
+}
+
+.skeleton-album-date {
+  height: 14px;
+  width: 40%;
 }
 
 .quick-actions {
