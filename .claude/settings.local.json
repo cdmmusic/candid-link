@@ -13,7 +13,17 @@
       "Bash(curl:*)",
       "Bash(bash:*)",
       "Bash(docker restart:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(sqlite3:*)",
+      "Bash(tree:*)",
+      "Bash(docker ps:*)",
+      "Bash(awk:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker stop:*)"
     ],
     "deny": [],
     "ask": []

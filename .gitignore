@@ -4,50 +4,51 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 venv/
+env/
 ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
+dist/
+build/
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.production
-.env.*
-
-# Vercel
-.vercel
 
 # Database
-*.db-journal
+*.db-shm
+*.db-wal
+database/*.db-shm
+database/*.db-wal
+
+# Progress files
+.collection_progress.txt
 batch_progress.json
 batch_failed.json
 
 # Logs
 *.log
+logs/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# macOS
 .DS_Store
 
+# Vercel
+.vercel/
+
 # n8n
-.n8n/
+n8n_data/
+
+# Docker
+docker-compose.override.yml
+
+# Archives
+*.tar.gz
+*.zip
+
+# Temporary test files
+test_*.xlsx

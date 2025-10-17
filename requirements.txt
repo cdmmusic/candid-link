@@ -1,2 +1,15 @@
+# Flask 웹 프레임워크
 Flask==3.0.0
+
+# Turso 데이터베이스
 libsql-experimental==0.0.55
+
+# HTTP 요청
+requests==2.31.0
+
+# Selenium WebDriver (Companion API용)
+selenium==4.15.2
+
+# Excel 파일 처리 (import_excel.py용)
+pandas==2.1.3
+openpyxl==3.1.2

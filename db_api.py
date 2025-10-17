@@ -3,13 +3,15 @@
 간단한 Flask API - n8n에서 앨범 링크를 SQLite DB에 저장
 """
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, render_template, send_from_directory
 import sqlite3
 from datetime import datetime
 import os
 import json
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_folder='static',
+            template_folder='templates')
 
 # SQLite DB 경로
 DB_PATH = os.path.join(os.path.dirname(__file__), 'database', 'album_links.db')
@@ -20,16 +22,26 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route('/static/<path:path>')
+def send_static(path):
+    """정적 파일 제공"""
+    return send_from_directory('static', path)
+
 @app.route('/', methods=['GET'])
 def index():
-    """웹 UI - 메인 페이지 (앨범 목록)"""
+    """웹 UI - 메인 페이지 (home_v2.html 사용)"""
+    return render_template('home_v2.html')
+
+@app.route('/old', methods=['GET'])
+def index_old():
+    """웹 UI - 메인 페이지 (앨범 목록) - 기존 버전 (deprecated)"""
     html = """
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINKSALAD - 음악 플랫폼 링크</title>
+    <title>캔디드뮤직 링크 - 모든 플랫폼의 음악 링크</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -522,7 +534,7 @@ def album_detail(album_id):
 
         # 앨범 정보 조회
         cursor.execute('''
-            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
+            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date, genre, release_type
             FROM album_platform_links
             WHERE artist_ko = ? AND album_ko = ?
         ''', (artist_ko, album_ko))
@@ -551,7 +563,9 @@ def album_detail(album_id):
             'album_ko': album_row['album_ko'],
             'album_en': album_row['album_en'],
             'album_cover_url': album_row['album_cover_url'] or '',
-            'release_date': album_row['release_date'] or ''
+            'release_date': album_row['release_date'] or '',
+            'genre': album_row['genre'] or 'K-Pop',
+            'release_type': album_row['release_type'] or '정규'
         }
 
         # 플랫폼 이름 변환 (한글 → 영어)
@@ -605,7 +619,7 @@ def album_detail(album_id):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{album_data["album_ko"]} - {album_data["artist_ko"]} | LINKSALAD</title>
+    <title>{album_data["album_ko"]} - {album_data["artist_ko"]} | 캔디드뮤직 링크 - 모든 플랫폼의 음악 링크</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
@@ -685,6 +699,13 @@ def album_detail(album_id):
         .album-meta {{
             display: flex;
             gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }}
+
+        .album-stats-detail {{
+            display: flex;
+            gap: 20px;
             margin-bottom: 25px;
             flex-wrap: wrap;
         }}
@@ -698,6 +719,31 @@ def album_detail(album_id):
             font-weight: 600;
             color: #495057;
             margin-right: 8px;
+        }}
+
+        .stat-icon-detail {{
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            vertical-align: middle;
+            margin-right: 6px;
+        }}
+
+        .stat-icon-detail.view {{
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>');
+        }}
+
+        .stat-icon-detail.like {{
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>');
+        }}
+
+        .stat-value-detail {{
+            font-weight: 600;
+            color: #6c757d;
+            vertical-align: middle;
         }}
 
         .share-btn {{
@@ -926,6 +972,24 @@ def album_detail(album_id):
                     <div class="meta-item">
                         <span class="meta-label">발매일</span>
                         {album_data['release_date'] if album_data['release_date'] else '미정'}
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">유형</span>
+                        {album_data['release_type']}
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">장르</span>
+                        {album_data['genre']}
+                    </div>
+                </div>
+                <div class="album-stats-detail">
+                    <div class="meta-item">
+                        <span class="stat-icon-detail view"></span>
+                        <span class="stat-value-detail">12.5K</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="stat-icon-detail like"></span>
+                        <span class="stat-value-detail">1.2K</span>
                     </div>
                 </div>
                 <button class="share-btn" onclick="openShareModal()">

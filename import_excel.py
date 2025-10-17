@@ -42,6 +42,8 @@ def import_excel_data():
         album_en = str(album['영문 앨범명']).strip() if pd.notna(album['영문 앨범명']) else album_ko
         artist_en = str(album['영문 앨범아티스트명']).strip() if pd.notna(album['영문 앨범아티스트명']) else artist_ko
         release_date = str(album['발매일'])[:10] if pd.notna(album['발매일']) else None
+        genre = str(album['장르']).strip() if pd.notna(album['장르']) else ''
+        release_type = str(album['앨범타입']).strip() if pd.notna(album['앨범타입']) else ''
 
         # 이미 존재하는 앨범인지 확인
         cursor.execute('''
@@ -86,12 +88,12 @@ def import_excel_data():
                     INSERT INTO album_platform_links
                     (artist_ko, artist_en, album_ko, album_en,
                      platform_type, platform_id, platform_code, platform_name,
-                     platform_url, album_cover_url, release_date, found, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, 0, CURRENT_TIMESTAMP)
+                     platform_url, album_cover_url, release_date, genre, release_type, found, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?, ?, 0, CURRENT_TIMESTAMP)
                 ''', (
                     artist_ko, artist_en, album_ko, album_en,
                     platform_type, platform_id, platform_code, platform_name,
-                    release_date
+                    release_date, genre, release_type
                 ))
             except sqlite3.IntegrityError:
                 # 중복 무시

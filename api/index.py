@@ -166,7 +166,7 @@ def album_detail(album_id):
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date, genre, release_type
+            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
             FROM album_platform_links
             WHERE artist_ko = ? AND album_ko = ?
         ''', (artist_ko, album_ko))

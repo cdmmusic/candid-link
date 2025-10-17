@@ -333,8 +333,11 @@ def parse_platform_response(platform_id, platform_name, response_data, use_api, 
         'status': 'success' if album_url else 'not_found'
     }
 
-def search_global_platforms_via_companion(artist, album, companion_api_url="http://localhost:5001"):
+def search_global_platforms_via_companion(artist, album, companion_api_url=None):
     """Companion API 호출 (n8n과 동일)"""
+    if companion_api_url is None:
+        companion_api_port = os.environ.get('COMPANION_API_PORT', '5001')
+        companion_api_url = f"http://localhost:{companion_api_port}"
     try:
         response = requests.post(
             f"{companion_api_url}/search",
@@ -378,50 +381,98 @@ def search_global_platforms_via_companion(artist, album, companion_api_url="http
 # ============================================================
 
 def save_to_database(artist_ko, artist_en, album_ko, album_en, kr_platforms, global_platforms, album_cover_url):
-    """Turso DB에 저장 (n8n Save to DB 로직)"""
+    """Turso DB에 저장 - 기존 데이터 보존"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
         saved_count = 0
 
-        # 한국 플랫폼 저장
+        # 기존 앨범 커버와 release_date 가져오기
+        cursor.execute('''
+            SELECT album_cover_url, release_date
+            FROM album_platform_links
+            WHERE artist_ko = ? AND album_ko = ?
+            LIMIT 1
+        ''', (artist_ko, album_ko))
+
+        existing = cursor.fetchone()
+        existing_cover = existing[0] if existing and existing[0] else None
+        existing_release_date = existing[1] if existing and existing[1] else None
+
+        # 기존 커버가 있으면 보존
+        if existing_cover:
+            album_cover_url = existing_cover
+
+        # 한국 플랫폼 저장 (UPDATE or INSERT)
         for platform_id, data in kr_platforms.items():
+            # 기존 레코드 확인
             cursor.execute('''
-                DELETE FROM album_platform_links
+                SELECT id, found FROM album_platform_links
                 WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'kr' AND platform_id = ?
             ''', (artist_ko, album_ko, platform_id))
 
-            cursor.execute('''
-                INSERT INTO album_platform_links
-                (artist_ko, artist_en, album_ko, album_en, platform_type, platform_id,
-                 platform_name, platform_url, album_id, album_cover_url, found, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (
-                artist_ko, artist_en, album_ko, album_en,
-                'kr', platform_id, data['platform_name'], data.get('album_url'),
-                data.get('album_id'), album_cover_url, 1 if data['found'] else 0,
-                data.get('status', '')
-            ))
+            existing_record = cursor.fetchone()
+
+            if existing_record and data['found']:
+                # UPDATE: found를 1로 업데이트하고 URL 추가
+                cursor.execute('''
+                    UPDATE album_platform_links
+                    SET platform_url = ?, album_id = ?, album_cover_url = ?, found = 1, status = ?
+                    WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'kr' AND platform_id = ?
+                ''', (data.get('album_url'), data.get('album_id'), album_cover_url, data.get('status', ''),
+                      artist_ko, album_ko, platform_id))
+            elif existing_record:
+                # 기존 레코드가 있지만 못 찾은 경우: 그대로 유지 (found=0)
+                pass
+            else:
+                # INSERT: 새 레코드
+                cursor.execute('''
+                    INSERT INTO album_platform_links
+                    (artist_ko, artist_en, album_ko, album_en, platform_type, platform_id,
+                     platform_name, platform_url, album_id, album_cover_url, release_date, found, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (
+                    artist_ko, artist_en, album_ko, album_en,
+                    'kr', platform_id, data['platform_name'], data.get('album_url'),
+                    data.get('album_id'), album_cover_url, existing_release_date,
+                    1 if data['found'] else 0, data.get('status', '')
+                ))
             saved_count += 1
 
-        # 해외 플랫폼 저장
+        # 해외 플랫폼 저장 (UPDATE or INSERT)
         for platform_code, data in global_platforms.items():
+            # 기존 레코드 확인
             cursor.execute('''
-                DELETE FROM album_platform_links
+                SELECT id, found FROM album_platform_links
                 WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'global' AND platform_code = ?
             ''', (artist_ko, album_ko, platform_code))
 
-            cursor.execute('''
-                INSERT INTO album_platform_links
-                (artist_ko, artist_en, album_ko, album_en, platform_type, platform_code,
-                 platform_name, platform_url, upc, album_cover_url, found, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (
-                artist_ko, artist_en, album_ko, album_en,
-                'global', platform_code, data['name'], data['url'],
-                data.get('upc'), album_cover_url, 1 if data['found'] else 0
-            ))
+            existing_record = cursor.fetchone()
+
+            if existing_record and data['found']:
+                # UPDATE: found를 1로 업데이트하고 URL 추가
+                cursor.execute('''
+                    UPDATE album_platform_links
+                    SET platform_url = ?, upc = ?, album_cover_url = ?, found = 1
+                    WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'global' AND platform_code = ?
+                ''', (data['url'], data.get('upc'), album_cover_url,
+                      artist_ko, album_ko, platform_code))
+            elif existing_record:
+                # 기존 레코드가 있지만 못 찾은 경우: 그대로 유지
+                pass
+            else:
+                # INSERT: 새 레코드
+                cursor.execute('''
+                    INSERT INTO album_platform_links
+                    (artist_ko, artist_en, album_ko, album_en, platform_type, platform_code,
+                     platform_name, platform_url, upc, album_cover_url, release_date, found, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (
+                    artist_ko, artist_en, album_ko, album_en,
+                    'global', platform_code, data['name'], data['url'],
+                    data.get('upc'), album_cover_url, existing_release_date, 1 if data['found'] else 0
+                ))
             saved_count += 1
 
         conn.commit()
