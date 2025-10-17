@@ -128,6 +128,24 @@
             }
         });
 
+        // 스켈레톤 UI 생성
+        function createSkeletonCards(count = 20) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="skeleton-album-card">
+                        <div class="skeleton skeleton-album-cover"></div>
+                        <div class="skeleton-album-info">
+                            <div class="skeleton skeleton-album-title"></div>
+                            <div class="skeleton skeleton-album-artist"></div>
+                            <div class="skeleton skeleton-album-date"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
         // 최신 발매 앨범 로드
         async function loadLatest(page = 1) {
             if (isLoading) return;
@@ -139,7 +157,7 @@
 
             // 첫 페이지는 로딩 표시
             if (page === 1) {
-                albumGrid.innerHTML = '<div class="loading">로딩 중...</div>';
+                albumGrid.innerHTML = createSkeletonCards(20);
             } else {
                 loadMoreButton.disabled = true;
                 loadMoreButton.textContent = '로딩 중...';
@@ -221,15 +239,18 @@
     <style>
         .page-header-section {
             background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            padding: 60px 20px 40px;
+            padding: 80px 20px 40px;
             color: white;
+            margin-top: 0;
         }
 
         .page-header-top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-title {
@@ -239,6 +260,8 @@
             align-items: center;
             gap: 16px;
             margin: 0;
+            flex: 1;
+            min-width: 200px;
         }
 
         .page-description {

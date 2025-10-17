@@ -127,10 +127,32 @@
             });
         });
 
+        // 스켈레톤 UI 생성
+        function createSkeletonItems(count = 10) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="skeleton-ranking-item">
+                        <div class="skeleton skeleton-ranking-number"></div>
+                        <div class="skeleton skeleton-ranking-cover"></div>
+                        <div class="skeleton-ranking-info">
+                            <div class="skeleton skeleton-ranking-title"></div>
+                            <div class="skeleton skeleton-ranking-artist"></div>
+                        </div>
+                        <div class="skeleton-ranking-meta">
+                            <div class="skeleton skeleton-ranking-platforms"></div>
+                            <div class="skeleton skeleton-ranking-date"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
         // TOP 100 로드
         async function loadTop100(period = 'weekly') {
             const rankingTable = document.getElementById('ranking-table');
-            rankingTable.innerHTML = '<div class="loading">로딩 중...</div>';
+            rankingTable.innerHTML = createSkeletonItems(10);
 
             try {
                 const response = await fetch(`/api/top100?period=${period}&limit=100`);
@@ -183,15 +205,18 @@
     <style>
         .page-header-section {
             background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            padding: 60px 20px 40px;
+            padding: 80px 20px 40px;
             color: white;
+            margin-top: 0;
         }
 
         .page-header-top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-title {
@@ -201,6 +226,8 @@
             align-items: center;
             gap: 16px;
             margin: 0;
+            flex: 1;
+            min-width: 200px;
         }
 
         .back-link {
