@@ -4,7 +4,7 @@ Vercel Serverless Function - 음악 플랫폼 링크 API
 Turso (libSQL) 데이터베이스 사용
 """
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, render_template
 import os
 import json
 from datetime import datetime
@@ -17,7 +17,7 @@ except ImportError:
     USE_TURSO = False
     print("Error: libsql_experimental required for Vercel deployment")
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
 # 환경 변수에서 Turso 설정 가져오기
 TURSO_DATABASE_URL = os.environ.get('TURSO_DATABASE_URL', '')
@@ -55,382 +55,8 @@ def dict_from_row(row, cursor=None):
 
 @app.route('/', methods=['GET'])
 def index():
-    """웹 UI - 메인 페이지 (앨범 목록)"""
-    html = """
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINKSALAD - 음악 플랫폼 링크</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-            background: #f8f9fa;
-            color: #212529;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 16px 20px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .search-box {
-            flex: 1;
-            max-width: 500px;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px 40px 10px 16px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: #007bff;
-        }
-
-        .search-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #adb5bd;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
-
-        .page-header {
-            margin-bottom: 20px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        /* Album List */
-        .album-table {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .table-header {
-            display: grid;
-            grid-template-columns: 1fr 300px 100px;
-            padding: 15px 20px;
-            background: #f8f9fa;
-            font-size: 13px;
-            font-weight: 600;
-            color: #6c757d;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .table-row {
-            display: grid;
-            grid-template-columns: 1fr 300px 100px;
-            padding: 15px 20px;
-            align-items: center;
-            border-bottom: 1px solid #f1f3f5;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .table-row:hover {
-            background: #f8f9fa;
-        }
-
-        .table-row:last-child {
-            border-bottom: none;
-        }
-
-        .album-cell {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .album-cover {
-            width: 60px;
-            height: 60px;
-            border-radius: 6px;
-            object-fit: cover;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .album-info-cell {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .album-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .album-date {
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        .artist-cell {
-            font-size: 15px;
-            color: #495057;
-        }
-
-        .date-cell {
-            font-size: 14px;
-            color: #6c757d;
-            text-align: right;
-        }
-
-        .loading, .no-data {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-            font-size: 15px;
-        }
-
-        .error {
-            background: #fff3cd;
-            color: #856404;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-wrap: wrap;
-            }
-
-            .search-box {
-                order: 3;
-                flex: 1 0 100%;
-                max-width: 100%;
-            }
-
-            .table-header {
-                display: none;
-            }
-
-            .table-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-                padding: 15px;
-            }
-
-            .album-cell {
-                grid-column: 1;
-            }
-
-            .artist-cell {
-                padding-left: 75px;
-                font-size: 14px;
-            }
-
-            .date-cell {
-                padding-left: 75px;
-                text-align: left;
-                font-size: 13px;
-            }
-
-            .album-cover {
-                width: 50px;
-                height: 50px;
-            }
-
-            .page-title {
-                font-size: 22px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <a href="/" class="logo">🔗 캔디드뮤직 링크</a>
-            <div class="search-box">
-                <input type="text" class="search-input" placeholder="아티스트, 앨범 검색" id="search-input">
-                <span class="search-icon">🔍</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">신규 발매 앨범</h1>
-        </div>
-
-        <div class="album-table">
-            <div class="table-header">
-                <div>앨범</div>
-                <div>아티스트</div>
-                <div style="text-align: right;">발매일</div>
-            </div>
-            <div id="album-list">
-                <div class="loading">앨범 목록 로딩 중...</div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let allAlbums = [];
-        let currentPage = 1;
-        let hasMore = true;
-        let isLoading = false;
-        let searchQuery = '';
-
-        async function loadAlbums(append = false) {
-            if (isLoading || !hasMore) return;
-
-            isLoading = true;
-
-            try {
-                const response = await fetch(`/api/albums-with-links?page=${currentPage}&limit=50`);
-                const data = await response.json();
-
-                if (!data.success) {
-                    throw new Error(data.error || '앨범 로드 실패');
-                }
-
-                if (append) {
-                    allAlbums = [...allAlbums, ...data.albums];
-                    appendAlbums(data.albums);
-                } else {
-                    allAlbums = data.albums;
-                    displayAlbums(data.albums);
-                }
-
-                hasMore = data.has_more;
-                currentPage++;
-
-            } catch (error) {
-                document.getElementById('album-list').innerHTML =
-                    `<div class="error">⚠️ ${error.message}</div>`;
-            } finally {
-                isLoading = false;
-            }
-        }
-
-        function displayAlbums(albums) {
-            const albumList = document.getElementById('album-list');
-
-            if (albums.length === 0) {
-                albumList.innerHTML = '<div class="no-data">등록된 앨범이 없습니다</div>';
-                return;
-            }
-
-            const html = albums.map(album => createAlbumHTML(album)).join('');
-            albumList.innerHTML = html;
-        }
-
-        function appendAlbums(albums) {
-            const albumList = document.getElementById('album-list');
-            const html = albums.map(album => createAlbumHTML(album)).join('');
-            albumList.insertAdjacentHTML('beforeend', html);
-        }
-
-        function createAlbumHTML(album) {
-            const releaseDate = (album.release_date && album.release_date.trim() !== '') ?
-                album.release_date.substring(0, 10) : '미정';
-
-            const albumId = encodeURIComponent(album.artist_ko + '|||' + album.album_ko);
-
-            return `
-                <a href="/album/${albumId}" class="table-row">
-                    <div class="album-cell">
-                        ${album.album_cover_url ?
-                            `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="album-cover" onerror="this.style.display='none'">` :
-                            '<div class="album-cover" style="background:#e9ecef;"></div>'}
-                        <div class="album-info-cell">
-                            <div class="album-title">${album.album_ko}</div>
-                        </div>
-                    </div>
-                    <div class="artist-cell">${album.artist_ko}</div>
-                    <div class="date-cell">${releaseDate}</div>
-                </a>
-            `;
-        }
-
-        // 무한 스크롤
-        window.addEventListener('scroll', () => {
-            if (searchQuery) return;
-            if (!hasMore || isLoading) return;
-
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const threshold = document.documentElement.offsetHeight - 200;
-
-            console.log('Scroll:', {scrollPosition, threshold, hasMore, isLoading});
-
-            if (scrollPosition >= threshold) {
-                console.log('Loading more albums...');
-                loadAlbums(true);
-            }
-        });
-
-        // 검색 기능 - 엔터키로 검색 페이지 이동
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const query = e.target.value.trim();
-                if (query) {
-                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                }
-            }
-        });
-
-        loadAlbums();
-    </script>
-</body>
-</html>
-    """
-    return render_template_string(html)
+    """웹 UI - 메인 페이지 (home_v2.html 사용)"""
+    return render_template('home_v2.html')
 
 @app.route('/api/albums-with-links', methods=['GET'])
 def get_albums_with_links():
@@ -540,10 +166,9 @@ def album_detail(album_id):
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
+            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date, genre, release_type
             FROM album_platform_links
             WHERE artist_ko = ? AND album_ko = ?
-            LIMIT 1
         ''', (artist_ko, album_ko))
 
         # 앨범 정보 가져오기
@@ -577,6 +202,59 @@ def album_detail(album_id):
             platforms.append(p_dict)
 
         conn.close()
+
+        # 플랫폼 이름 변환 및 로고 매핑
+        platform_name_map = {
+            '멜론': 'Melon',
+            '벅스': 'Bugs',
+            '지니뮤직': 'Genie',
+            'TCT': 'QQ MUSIC'
+        }
+
+        platform_logos = {
+            'Melon': 'https://cdnimg.melon.co.kr/resource/image/web/common/logo_melon142x99.png',
+            'FLO': 'https://www.music-flo.com/image/v2/icon/ico_flo_192.png',
+            'Genie': 'https://www.genie.co.kr/resources/images/common/logo_genie_mo.png',
+            'VIBE': 'https://music-phinf.pstatic.net/20200713_140/1594609570298EfHBo_PNG/vibe_app_icon.png',
+            'Bugs': 'https://image.bugsm.co.kr/resource/web/common/logo_bugs.png',
+            'Apple Music': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/200px-Apple_Music_icon.svg.png',
+            'Spotify': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/200px-Spotify_logo_without_text.svg.png',
+            'YouTube': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/200px-YouTube_full-color_icon_%282017%29.svg.png',
+            'Amazon Music': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Amazon_Music_logo.svg/200px-Amazon_Music_logo.svg.png',
+            'Deezer': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Deezer_logo.svg/200px-Deezer_logo.svg.png',
+            'Tidal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Tidal_%28service%29_logo.svg/200px-Tidal_%28service%29_logo.svg.png',
+            'KKBox': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/KKBOX_logo.svg/200px-KKBOX_logo.svg.png',
+            'Anghami': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Anghami_logo.svg/200px-Anghami_logo.svg.png',
+            'Pandora': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Pandora_wordmark.svg/200px-Pandora_wordmark.svg.png',
+            'LINE Music': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/LINE_logo.svg/200px-LINE_logo.svg.png',
+            'AWA': 'https://awa.fm/assets/img/icon_512x512.png',
+            'Moov': 'https://www.moov.hk/static/img/moov_logo_512x512.png',
+            'QQ MUSIC': 'https://y.qq.com/favicon.ico'
+        }
+
+        platforms_data = []
+        for p in platforms:
+            platform_name = platform_name_map.get(p['platform_name'], p['platform_name'])
+            platforms_data.append({
+                'platform_name': platform_name,
+                'platform_url': p['platform_url'] or '',
+                'platform_logo': platform_logos.get(platform_name, ''),
+                'found': bool(p['found'])
+            })
+
+        platforms_json = json.dumps(platforms_data)
+
+        # 앨범 데이터
+        album_data = {
+            'artist_ko': album_dict['artist_ko'],
+            'artist_en': album_dict.get('artist_en') or '',
+            'album_ko': album_dict['album_ko'],
+            'album_en': album_dict.get('album_en') or '',
+            'album_cover_url': album_dict.get('album_cover_url') or '',
+            'release_date': album_dict.get('release_date') or '',
+            'genre': album_dict.get('genre') or 'K-Pop',
+            'release_type': album_dict.get('release_type') or '정규'
+        }
 
         # HTML 생성
         html = f"""
@@ -1100,6 +778,137 @@ def api_search():
             'count': len(albums),
             'query': query,
             'albums': albums
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/save', methods=['POST'])
+def save_album_links():
+    """
+    n8n에서 앨범 링크 데이터를 받아서 Turso DB에 저장
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        req_data = data.get('request', {})
+        artist_ko = req_data.get('artist', '')
+        album_ko = req_data.get('album', '')
+        artist_en = artist_ko
+        album_en = album_ko
+        album_cover_url = data.get('album_cover_url', '')
+        
+        kr_platforms = data.get('kr_platforms', {})
+        global_platforms = data.get('global_platforms', {})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 기존 release_date 조회
+        cursor.execute('''
+            SELECT release_date FROM album_platform_links
+            WHERE artist_ko = ? AND album_ko = ?
+            LIMIT 1
+        ''', (artist_ko, album_ko))
+        
+        existing_row = cursor.fetchone()
+        if existing_row:
+            existing_dict = dict_from_row(existing_row, cursor)
+            release_date = existing_dict['release_date']
+        else:
+            release_date = None
+
+        saved_count = 0
+
+        # 국내 플랫폼 저장 (UPDATE or INSERT)
+        for platform_id, platform_data in kr_platforms.items():
+            # 기존 레코드 확인
+            cursor.execute('''
+                SELECT id, found FROM album_platform_links
+                WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'kr' AND platform_id = ?
+            ''', (artist_ko, album_ko, platform_id))
+
+            existing_record = cursor.fetchone()
+            is_found = platform_data.get('found', False)
+
+            if existing_record and is_found:
+                # UPDATE: found를 1로 업데이트하고 URL 추가
+                cursor.execute('''
+                    UPDATE album_platform_links
+                    SET platform_url = ?, album_id = ?, album_cover_url = ?, found = 1, status = ?
+                    WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'kr' AND platform_id = ?
+                ''', (
+                    platform_data.get('album_url', ''), platform_data.get('album_id', ''),
+                    album_cover_url, platform_data.get('status', ''),
+                    artist_ko, album_ko, platform_id
+                ))
+            elif existing_record:
+                # 기존 레코드가 있지만 못 찾은 경우: 그대로 유지 (found=0)
+                pass
+            else:
+                # INSERT: 새 레코드
+                cursor.execute('''
+                    INSERT INTO album_platform_links
+                    (artist_ko, artist_en, album_ko, album_en, platform_type, platform_id,
+                     platform_name, platform_url, album_id, album_cover_url, release_date, found, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (
+                    artist_ko, artist_en, album_ko, album_en, 'kr', platform_id,
+                    platform_data.get('name', ''), platform_data.get('album_url', ''),
+                    platform_data.get('album_id', ''), album_cover_url, release_date,
+                    1 if is_found else 0, platform_data.get('status', '')
+                ))
+            saved_count += 1
+
+        # 해외 플랫폼 저장 (UPDATE or INSERT)
+        for platform_code, platform_data in global_platforms.items():
+            # 기존 레코드 확인
+            cursor.execute('''
+                SELECT id, found FROM album_platform_links
+                WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'global' AND platform_code = ?
+            ''', (artist_ko, album_ko, platform_code))
+
+            existing_record = cursor.fetchone()
+            is_found = platform_data.get('found', False)
+
+            if existing_record and is_found:
+                # UPDATE: found를 1로 업데이트하고 URL 추가
+                cursor.execute('''
+                    UPDATE album_platform_links
+                    SET platform_url = ?, upc = ?, album_cover_url = ?, found = 1
+                    WHERE artist_ko = ? AND album_ko = ? AND platform_type = 'global' AND platform_code = ?
+                ''', (
+                    platform_data.get('url', ''), platform_data.get('upc', ''),
+                    album_cover_url,
+                    artist_ko, album_ko, platform_code
+                ))
+            elif existing_record:
+                # 기존 레코드가 있지만 못 찾은 경우: 그대로 유지
+                pass
+            else:
+                # INSERT: 새 레코드
+                cursor.execute('''
+                    INSERT INTO album_platform_links
+                    (artist_ko, artist_en, album_ko, album_en, platform_type, platform_code,
+                     platform_name, platform_url, upc, album_cover_url, release_date, found, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (
+                    artist_ko, artist_en, album_ko, album_en, 'global', platform_code,
+                    platform_data.get('name', ''), platform_data.get('url', ''),
+                    platform_data.get('upc', ''), album_cover_url, release_date,
+                    1 if is_found else 0
+                ))
+            saved_count += 1
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'saved_count': saved_count,
+            'message': f'Successfully saved {saved_count} platform links'
         })
 
     except Exception as e:
