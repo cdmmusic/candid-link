@@ -36,14 +36,14 @@
     <!-- 페이지 헤더 -->
     <section class="page-header-section">
         <div class="container">
-            <div class="page-header-top">
+            <a href="/" class="back-link">← 홈으로</a>
+            <div class="page-header-content">
                 <h1 class="page-title">
                     <span>🎵</span>
                     최신 발매
                 </h1>
-                <a href="/" class="back-link">← 홈으로</a>
+                <p class="page-description">발매일 기준 최신순으로 정렬된 앨범 목록입니다</p>
             </div>
-            <p class="page-description">발매일 기준 최신순으로 정렬된 앨범 목록입니다</p>
         </div>
     </section>
 
@@ -195,9 +195,11 @@
                     card.href = `/album/${albumId}`;
                     card.className = 'album-card';
                     card.innerHTML = `
-                        ${album.album_cover_url ?
-                            `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="album-cover" onerror="this.style.display='none'">` :
-                            '<div class="album-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>'}
+                        <div class="album-thumbnail-container">
+                            ${album.album_cover_url ?
+                                `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="album-thumbnail" onerror="this.style.display='none'">` :
+                                '<div class="album-thumbnail" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>'}
+                        </div>
                         <div class="album-info">
                             <div class="album-title">${album.album_ko}</div>
                             <div class="album-artist">${album.artist_ko}</div>
@@ -244,13 +246,22 @@
             margin-top: 0;
         }
 
-        .page-header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 16px;
+        .back-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .page-header-content {
+            margin-top: 0;
         }
 
         .page-title {
@@ -259,27 +270,13 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            margin: 0;
-            flex: 1;
-            min-width: 200px;
+            margin: 0 0 16px 0;
         }
 
         .page-description {
             font-size: 16px;
             opacity: 0.9;
             margin: 0;
-        }
-
-        .back-link {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            opacity: 0.9;
-            transition: opacity 0.2s;
-        }
-
-        .back-link:hover {
-            opacity: 1;
         }
 
         .load-more-container {
