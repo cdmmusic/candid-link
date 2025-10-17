@@ -251,9 +251,7 @@ def album_detail(album_id):
             'album_ko': album_dict['album_ko'],
             'album_en': album_dict.get('album_en') or '',
             'album_cover_url': album_dict.get('album_cover_url') or '',
-            'release_date': album_dict.get('release_date') or '',
-            'genre': album_dict.get('genre') or 'K-Pop',
-            'release_type': album_dict.get('release_type') or '정규'
+            'release_date': album_dict.get('release_date') or ''
         }
 
         # HTML 생성
