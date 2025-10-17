@@ -36,19 +36,19 @@
     <!-- 페이지 헤더 -->
     <section class="page-header-section">
         <div class="container">
-            <div class="page-header-top">
+            <a href="/" class="back-link">← 홈으로</a>
+            <div class="page-header-content">
                 <h1 class="page-title">
                     <span>🔥</span>
                     TOP 100
                 </h1>
-                <a href="/" class="back-link">← 홈으로</a>
-            </div>
 
-            <!-- 기간 선택 탭 -->
-            <div class="period-tabs">
-                <button class="period-tab" data-period="daily">일간</button>
-                <button class="period-tab active" data-period="weekly">주간</button>
-                <button class="period-tab" data-period="annual">연간</button>
+                <!-- 기간 선택 탭 -->
+                <div class="period-tabs">
+                    <button class="period-tab" data-period="daily">일간</button>
+                    <button class="period-tab active" data-period="weekly">주간</button>
+                    <button class="period-tab" data-period="annual">연간</button>
+                </div>
             </div>
         </div>
     </section>
@@ -203,31 +203,16 @@
     </script>
 
     <style>
+        .page-header-section .container {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
         .page-header-section {
             background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
             padding: 80px 20px 40px;
             color: white;
             margin-top: 0;
-        }
-
-        .page-header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-title {
-            font-size: 42px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 0;
-            flex: 1;
-            min-width: 200px;
         }
 
         .back-link {
@@ -236,10 +221,25 @@
             font-size: 16px;
             opacity: 0.9;
             transition: opacity 0.2s;
+            display: inline-block;
+            margin-bottom: 20px;
         }
 
         .back-link:hover {
             opacity: 1;
+        }
+
+        .page-header-content {
+            margin-top: 0;
+        }
+
+        .page-title {
+            font-size: 42px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0 0 20px 0;
         }
 
         .period-tabs {
