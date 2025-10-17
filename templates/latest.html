@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="최신 발매 앨범 - 발매일 기준 최신순">
+    <title>최신 발매 - 캔디드뮤직 링크</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <span class="logo-icon">🔗</span>
+                <span>캔디드뮤직</span>
+            </a>
+
+            <div class="search-container">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="search-input"
+                    placeholder="아티스트, 앨범 검색..."
+                    autocomplete="off">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 페이지 헤더 -->
+    <section class="page-header-section">
+        <div class="container">
+            <div class="page-header-top">
+                <h1 class="page-title">
+                    <span>🎵</span>
+                    최신 발매
+                </h1>
+                <a href="/" class="back-link">← 홈으로</a>
+            </div>
+            <p class="page-description">발매일 기준 최신순으로 정렬된 앨범 목록입니다</p>
+        </div>
+    </section>
+
+    <!-- 앨범 그리드 -->
+    <section class="section">
+        <div class="container">
+            <div class="album-grid" id="album-grid">
+                <div class="loading">로딩 중...</div>
+            </div>
+
+            <!-- 더보기 버튼 -->
+            <div class="load-more-container" id="load-more-container" style="display: none;">
+                <button class="load-more-button" id="load-more-button">
+                    더보기 →
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>캔디드뮤직 링크</h3>
+                <p>17개 음악 플랫폼의 링크를 한 곳에서</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>서비스</h3>
+                <ul class="footer-links">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/top100">TOP 100</a></li>
+                    <li><a href="/latest">최신 발매</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원</h3>
+                <ul class="footer-links">
+                    <li><a href="#contact">문의하기</a></li>
+                    <li><a href="#terms">이용약관</a></li>
+                    <li><a href="#privacy">개인정보처리방침</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원 플랫폼</h3>
+                <ul class="footer-links">
+                    <li>국내: Melon, Genie, Bugs, FLO, VIBE</li>
+                    <li>글로벌: Spotify, Apple Music, YouTube 외 9개</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Candid Music Entertainment. All rights reserved.</p>
+            <p>Made with ❤️ in Seoul</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        let currentPage = 1;
+        let hasMore = true;
+        let isLoading = false;
+
+        // 검색 기능
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                if (query) {
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+
+        // 더보기 버튼
+        document.getElementById('load-more-button').addEventListener('click', () => {
+            if (!isLoading && hasMore) {
+                currentPage++;
+                loadLatest(currentPage);
+            }
+        });
+
+        // 최신 발매 앨범 로드
+        async function loadLatest(page = 1) {
+            if (isLoading) return;
+
+            isLoading = true;
+            const albumGrid = document.getElementById('album-grid');
+            const loadMoreContainer = document.getElementById('load-more-container');
+            const loadMoreButton = document.getElementById('load-more-button');
+
+            // 첫 페이지는 로딩 표시
+            if (page === 1) {
+                albumGrid.innerHTML = '<div class="loading">로딩 중...</div>';
+            } else {
+                loadMoreButton.disabled = true;
+                loadMoreButton.textContent = '로딩 중...';
+            }
+
+            try {
+                const response = await fetch(`/api/latest?page=${page}&limit=20`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load albums');
+                }
+
+                // 첫 페이지는 초기화, 이후는 추가
+                if (page === 1) {
+                    albumGrid.innerHTML = '';
+                }
+
+                if (data.albums.length === 0) {
+                    if (page === 1) {
+                        albumGrid.innerHTML = '<div class="no-data">앨범이 없습니다</div>';
+                    }
+                    hasMore = false;
+                    loadMoreContainer.style.display = 'none';
+                    return;
+                }
+
+                // 앨범 카드 생성
+                data.albums.forEach(album => {
+                    const albumId = encodeURIComponent(album.artist_ko + '|||' + album.album_ko);
+                    const releaseDate = (album.release_date && album.release_date.trim() !== '') ?
+                        album.release_date.substring(0, 10) : '미정';
+
+                    const card = document.createElement('a');
+                    card.href = `/album/${albumId}`;
+                    card.className = 'album-card';
+                    card.innerHTML = `
+                        ${album.album_cover_url ?
+                            `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="album-cover" onerror="this.style.display='none'">` :
+                            '<div class="album-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>'}
+                        <div class="album-info">
+                            <div class="album-title">${album.album_ko}</div>
+                            <div class="album-artist">${album.artist_ko}</div>
+                            <div class="album-meta">
+                                <span class="album-date">${releaseDate}</span>
+                            </div>
+                        </div>
+                    `;
+                    albumGrid.appendChild(card);
+                });
+
+                // 더보기 버튼 상태 업데이트
+                hasMore = data.has_more;
+                if (hasMore) {
+                    loadMoreContainer.style.display = 'flex';
+                    loadMoreButton.disabled = false;
+                    loadMoreButton.textContent = '더보기 →';
+                } else {
+                    loadMoreContainer.style.display = 'none';
+                }
+
+            } catch (error) {
+                if (page === 1) {
+                    albumGrid.innerHTML = `<div class="error-message">⚠️ ${error.message}</div>`;
+                } else {
+                    alert(`오류: ${error.message}`);
+                }
+                hasMore = false;
+                loadMoreContainer.style.display = 'none';
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // 초기 로드
+        loadLatest(1);
+    </script>
+
+    <style>
+        .page-header-section {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 60px 20px 40px;
+            color: white;
+        }
+
+        .page-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .page-title {
+            font-size: 42px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
+        .page-description {
+            font-size: 16px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .load-more-button {
+            padding: 14px 40px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .load-more-button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .load-more-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading, .no-data, .error-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+
+            .page-description {
+                font-size: 14px;
+            }
+        }
+    </style>
+</body>
+</html>

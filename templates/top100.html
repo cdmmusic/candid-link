@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="캔디드뮤직 TOP 100 - 가장 인기있는 음악 앨범">
+    <title>TOP 100 - 캔디드뮤직 링크</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <span class="logo-icon">🔗</span>
+                <span>캔디드뮤직</span>
+            </a>
+
+            <div class="search-container">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="search-input"
+                    placeholder="아티스트, 앨범 검색..."
+                    autocomplete="off">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 페이지 헤더 -->
+    <section class="page-header-section">
+        <div class="container">
+            <div class="page-header-top">
+                <h1 class="page-title">
+                    <span>🔥</span>
+                    TOP 100
+                </h1>
+                <a href="/" class="back-link">← 홈으로</a>
+            </div>
+
+            <!-- 기간 선택 탭 -->
+            <div class="period-tabs">
+                <button class="period-tab" data-period="daily">일간</button>
+                <button class="period-tab active" data-period="weekly">주간</button>
+                <button class="period-tab" data-period="annual">연간</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- TOP 100 리스트 -->
+    <section class="section">
+        <div class="container">
+            <div class="ranking-table" id="ranking-table">
+                <div class="loading">로딩 중...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>캔디드뮤직 링크</h3>
+                <p>17개 음악 플랫폼의 링크를 한 곳에서</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>서비스</h3>
+                <ul class="footer-links">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/top100">TOP 100</a></li>
+                    <li><a href="/latest">최신 발매</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원</h3>
+                <ul class="footer-links">
+                    <li><a href="#contact">문의하기</a></li>
+                    <li><a href="#terms">이용약관</a></li>
+                    <li><a href="#privacy">개인정보처리방침</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원 플랫폼</h3>
+                <ul class="footer-links">
+                    <li>국내: Melon, Genie, Bugs, FLO, VIBE</li>
+                    <li>글로벌: Spotify, Apple Music, YouTube 외 9개</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Candid Music Entertainment. All rights reserved.</p>
+            <p>Made with ❤️ in Seoul</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        let currentPeriod = 'weekly';
+
+        // 검색 기능
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                if (query) {
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+
+        // 기간 탭 전환
+        document.querySelectorAll('.period-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentPeriod = tab.dataset.period;
+                loadTop100(currentPeriod);
+            });
+        });
+
+        // TOP 100 로드
+        async function loadTop100(period = 'weekly') {
+            const rankingTable = document.getElementById('ranking-table');
+            rankingTable.innerHTML = '<div class="loading">로딩 중...</div>';
+
+            try {
+                const response = await fetch(`/api/top100?period=${period}&limit=100`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load TOP 100');
+                }
+
+                if (data.albums.length === 0) {
+                    rankingTable.innerHTML = '<div class="no-data">데이터가 없습니다</div>';
+                    return;
+                }
+
+                // 랭킹 테이블 생성
+                const html = data.albums.map(album => {
+                    const albumId = encodeURIComponent(album.artist_ko + '|||' + album.album_ko);
+                    const releaseDate = (album.release_date && album.release_date.trim() !== '') ?
+                        album.release_date.substring(0, 10) : '미정';
+
+                    return `
+                        <a href="/album/${albumId}" class="ranking-item">
+                            <div class="ranking-number">${album.rank}</div>
+                            ${album.album_cover_url ?
+                                `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="ranking-cover" onerror="this.style.display='none'">` :
+                                '<div class="ranking-cover" style="background:#e9ecef;"></div>'}
+                            <div class="ranking-info">
+                                <div class="ranking-title">${album.album_ko}</div>
+                                <div class="ranking-artist">${album.artist_ko}</div>
+                            </div>
+                            <div class="ranking-meta">
+                                <div class="ranking-platforms">${album.found_count}개 플랫폼</div>
+                                <div class="ranking-date">${releaseDate}</div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+                rankingTable.innerHTML = html;
+
+            } catch (error) {
+                rankingTable.innerHTML = `<div class="error-message">⚠️ ${error.message}</div>`;
+            }
+        }
+
+        // 초기 로드
+        loadTop100('weekly');
+    </script>
+
+    <style>
+        .page-header-section {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 60px 20px 40px;
+            color: white;
+        }
+
+        .page-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 42px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .period-tabs {
+            display: flex;
+            gap: 12px;
+        }
+
+        .period-tab {
+            padding: 10px 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-md);
+            background: transparent;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .period-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .period-tab.active {
+            background: white;
+            color: var(--primary);
+            border-color: white;
+        }
+
+        .ranking-table {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .ranking-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .ranking-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .ranking-cover {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-md);
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ranking-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ranking-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ranking-artist {
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .ranking-meta {
+            text-align: right;
+        }
+
+        .ranking-platforms {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .ranking-date {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .loading, .no-data, .error-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+
+            .ranking-item {
+                padding: 12px 16px;
+                gap: 12px;
+            }
+
+            .ranking-number {
+                font-size: 20px;
+                min-width: 40px;
+            }
+
+            .ranking-cover {
+                width: 60px;
+                height: 60px;
+            }
+
+            .ranking-title {
+                font-size: 16px;
+            }
+
+            .ranking-artist {
+                font-size: 14px;
+            }
+        }
+    </style>
+</body>
+</html>

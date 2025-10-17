@@ -58,6 +58,16 @@ def index():
     """웹 UI - 메인 페이지 (home_v2.html 사용)"""
     return render_template('home_v2.html')
 
+@app.route('/top100', methods=['GET'])
+def top100_page():
+    """TOP 100 페이지"""
+    return render_template('top100.html')
+
+@app.route('/latest', methods=['GET'])
+def latest_page():
+    """최신 발매 페이지"""
+    return render_template('latest.html')
+
 @app.route('/api/albums-with-links', methods=['GET'])
 def get_albums_with_links():
     """모든 앨범과 플랫폼 링크 조회 (웹 UI용) - 페이지네이션 지원"""
@@ -84,7 +94,7 @@ def get_albums_with_links():
         total_count = total_dict['total']
 
         # 앨범 목록 조회 (페이지네이션)
-        # 서브쿼리로 앨범별 최신 레코드를 먼저 가져온 후 페이지네이션 적용
+        # 발매일이 지나지 않은 앨범은 제외
         cursor.execute('''
             SELECT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
             FROM (
@@ -98,14 +108,12 @@ def get_albums_with_links():
                     MAX(created_at) as latest_created_at,
                     ROW_NUMBER() OVER (PARTITION BY artist_ko, album_ko ORDER BY created_at DESC) as rn
                 FROM album_platform_links
-                WHERE release_date IS NULL
-                   OR release_date = ''
-                   OR datetime(release_date) <= datetime('now', 'localtime')
+                WHERE (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
                 GROUP BY artist_ko, album_ko
             )
             WHERE rn = 1
             ORDER BY
-                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url != '' THEN 0 ELSE 1 END,
+                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url <> '' THEN 0 ELSE 1 END,
                 release_date DESC,
                 latest_created_at DESC
             LIMIT ? OFFSET ?
@@ -748,14 +756,16 @@ def api_search():
         cursor = conn.cursor()
 
         # LIKE 검색 (대소문자 무시)
+        # 발매일이 지나지 않은 앨범은 제외
         search_pattern = f'%{query}%'
 
         cursor.execute('''
             SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
             FROM album_platform_links
-            WHERE artist_ko LIKE ? OR artist_en LIKE ? OR album_ko LIKE ? OR album_en LIKE ?
+            WHERE (artist_ko LIKE ? OR artist_en LIKE ? OR album_ko LIKE ? OR album_en LIKE ?)
+              AND (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
             ORDER BY
-                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url != '' THEN 0 ELSE 1 END,
+                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url <> '' THEN 0 ELSE 1 END,
                 release_date DESC
             LIMIT 200
         ''', (search_pattern, search_pattern, search_pattern, search_pattern))
@@ -907,6 +917,161 @@ def save_album_links():
             'success': True,
             'saved_count': saved_count,
             'message': f'Successfully saved {saved_count} platform links'
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/top100', methods=['GET'])
+def api_top100():
+    """TOP 100 API - 조회수/좋아요 기반 랭킹"""
+    try:
+        period = request.args.get('period', 'weekly')  # daily, weekly, annual
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 100))
+        offset = (page - 1) * limit
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 기간별 날짜 필터 계산
+        if period == 'daily':
+            date_filter = "datetime(created_at) >= datetime('now', '-1 day', 'localtime')"
+        elif period == 'annual':
+            date_filter = "datetime(created_at) >= datetime('now', '-1 year', 'localtime')"
+        else:  # weekly (기본)
+            date_filter = "datetime(created_at) >= datetime('now', '-7 days', 'localtime')"
+
+        # TOP 100 조회 (플랫폼 링크 수로 인기도 측정)
+        # 발매일이 지나지 않은 앨범은 제외
+        cursor.execute(f'''
+            SELECT
+                artist_ko, artist_en, album_ko, album_en,
+                album_cover_url, release_date,
+                COUNT(*) as platform_count,
+                SUM(CASE WHEN found = 1 THEN 1 ELSE 0 END) as found_count
+            FROM album_platform_links
+            WHERE (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
+              AND {date_filter}
+            GROUP BY artist_ko, album_ko
+            ORDER BY found_count DESC, platform_count DESC, release_date DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+
+        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        albums = []
+        rank = offset + 1
+        for row in cursor.fetchall():
+            if USE_TURSO and albums_columns:
+                row_dict = dict(zip(albums_columns, row))
+            else:
+                row_dict = dict(row)
+
+            albums.append({
+                'rank': rank,
+                'artist_ko': row_dict['artist_ko'],
+                'artist_en': row_dict['artist_en'],
+                'album_ko': row_dict['album_ko'],
+                'album_en': row_dict['album_en'],
+                'album_cover_url': row_dict['album_cover_url'],
+                'release_date': row_dict['release_date'],
+                'platform_count': row_dict['platform_count'],
+                'found_count': row_dict['found_count']
+            })
+            rank += 1
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'period': period,
+            'count': len(albums),
+            'page': page,
+            'limit': limit,
+            'albums': albums
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/latest', methods=['GET'])
+def api_latest():
+    """최신 발매 API - 발매일 기준 최신순"""
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        offset = (page - 1) * limit
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 전체 앨범 수 조회 (발매일이 지난 앨범만)
+        cursor.execute('''
+            SELECT COUNT(DISTINCT artist_ko || '|||' || album_ko) as total
+            FROM album_platform_links
+            WHERE (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
+        ''')
+
+        total_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        total_row = cursor.fetchone()
+        if USE_TURSO and total_columns:
+            total_dict = dict(zip(total_columns, total_row))
+        else:
+            total_dict = dict(total_row)
+        total_count = total_dict['total']
+
+        # 최신 발매 앨범 조회 (발매일 내림차순)
+        cursor.execute('''
+            SELECT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
+            FROM (
+                SELECT
+                    artist_ko,
+                    artist_en,
+                    album_ko,
+                    album_en,
+                    album_cover_url,
+                    release_date,
+                    MAX(created_at) as latest_created_at,
+                    ROW_NUMBER() OVER (PARTITION BY artist_ko, album_ko ORDER BY created_at DESC) as rn
+                FROM album_platform_links
+                WHERE (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
+                GROUP BY artist_ko, album_ko
+            )
+            WHERE rn = 1
+            ORDER BY
+                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url <> '' THEN 0 ELSE 1 END,
+                release_date DESC,
+                latest_created_at DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+
+        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        albums = []
+        for row in cursor.fetchall():
+            if USE_TURSO and albums_columns:
+                row_dict = dict(zip(albums_columns, row))
+            else:
+                row_dict = dict(row)
+
+            albums.append({
+                'artist_ko': row_dict['artist_ko'],
+                'artist_en': row_dict['artist_en'],
+                'album_ko': row_dict['album_ko'],
+                'album_en': row_dict['album_en'],
+                'album_cover_url': row_dict['album_cover_url'],
+                'release_date': row_dict['release_date']
+            })
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'count': len(albums),
+            'total': total_count,
+            'page': page,
+            'limit': limit,
+            'has_more': (offset + len(albums)) < total_count,
+            'albums': albums
         })
 
     except Exception as e:
