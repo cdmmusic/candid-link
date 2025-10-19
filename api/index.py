@@ -539,6 +539,9 @@ def search():
             font-weight: 700;
             color: #007bff;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }}
         .search-box {{
             flex: 1;
@@ -562,6 +565,22 @@ def search():
             top: 50%;
             transform: translateY(-50%);
             color: #adb5bd;
+        }}
+        .report-button {{
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }}
+        .report-button:hover {{
+            background: #0056b3;
+            transform: translateY(-1px);
         }}
         .container {{
             max-width: 1200px;
@@ -654,11 +673,17 @@ def search():
 <body>
     <div class="header">
         <div class="header-content">
-            <a href="/" class="logo">🔗 캔디드뮤직 링크</a>
+            <a href="/" class="logo">
+                <span>🔗</span>
+                <span>캔디드뮤직</span>
+            </a>
             <div class="search-box">
-                <input type="text" class="search-input" placeholder="아티스트, 앨범 검색" id="search-input" value="{query}">
+                <input type="text" class="search-input" placeholder="아티스트, 앨범 검색..." id="search-input" value="{query}">
                 <span class="search-icon">🔍</span>
             </div>
+            <a href="https://pf.kakao.com/_azxkPn" target="_blank" class="report-button">
+                오류제보
+            </a>
         </div>
     </div>
     <div class="container">
