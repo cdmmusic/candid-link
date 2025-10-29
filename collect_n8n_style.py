@@ -52,11 +52,18 @@ def get_uncollected_albums(limit=None):
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # albums 테이블에서 CDMA 코드와 함께 가져오기
     query = '''
-        SELECT DISTINCT artist_ko, artist_en, album_ko, album_en
-        FROM album_platform_links
-        WHERE found = 0 OR found IS NULL
-        ORDER BY created_at DESC
+        SELECT DISTINCT
+            apl.artist_ko,
+            apl.artist_en,
+            apl.album_ko,
+            apl.album_en,
+            a.album_code as cdma_code
+        FROM album_platform_links apl
+        LEFT JOIN albums a ON apl.artist_ko = a.artist_ko AND apl.album_ko = a.album_ko
+        WHERE apl.found = 0 OR apl.found IS NULL
+        ORDER BY apl.created_at DESC
     '''
 
     if limit:
@@ -333,15 +340,21 @@ def parse_platform_response(platform_id, platform_name, response_data, use_api, 
         'status': 'success' if album_url else 'not_found'
     }
 
-def search_global_platforms_via_companion(artist, album, companion_api_url=None):
-    """Companion API 호출 (n8n과 동일)"""
+def search_global_platforms_via_companion(artist_ko, artist_en, album_ko, album_en, cdma_code=None, companion_api_url=None):
+    """Companion API 호출 - 3단계 검색 전략"""
     if companion_api_url is None:
         companion_api_port = os.environ.get('COMPANION_API_PORT', '5001')
         companion_api_url = f"http://localhost:{companion_api_port}"
     try:
         response = requests.post(
             f"{companion_api_url}/search",
-            json={'artist': artist, 'album': album},
+            json={
+                'artist_ko': artist_ko,
+                'artist_en': artist_en,
+                'album_ko': album_ko,
+                'album_en': album_en,
+                'cdma_code': cdma_code
+            },
             timeout=90
         )
 
@@ -350,6 +363,7 @@ def search_global_platforms_via_companion(artist, album, companion_api_url=None)
             if result.get('success'):
                 platforms = result.get('data', {}).get('platforms', [])
                 album_cover_url = result.get('data', {}).get('album_cover_url')
+                search_strategy = result.get('search_strategy', 'UNKNOWN')
 
                 # n8n 형식으로 변환
                 platforms_dict = {}
@@ -365,16 +379,17 @@ def search_global_platforms_via_companion(artist, album, companion_api_url=None)
                     'success': True,
                     'platforms': platforms_dict,
                     'album_cover_url': album_cover_url,
-                    'count': len(platforms)
+                    'count': len(platforms),
+                    'search_strategy': search_strategy
                 }
 
-        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0}
+        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0, 'search_strategy': None}
 
     except requests.exceptions.ConnectionError:
         print(f"  {Colors.WARNING}Companion API not available{Colors.ENDC}")
-        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0}
+        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0, 'search_strategy': None}
     except Exception as e:
-        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0}
+        return {'success': False, 'platforms': {}, 'album_cover_url': None, 'count': 0, 'search_strategy': None}
 
 # ============================================================
 # 데이터베이스 저장
@@ -487,8 +502,8 @@ def save_to_database(artist_ko, artist_en, album_ko, album_en, kr_platforms, glo
 # 메인 프로세스
 # ============================================================
 
-def process_album(artist_ko, artist_en, album_ko, album_en):
-    """개별 앨범 처리 (n8n 워크플로우 전체 로직)"""
+def process_album(artist_ko, artist_en, album_ko, album_en, cdma_code=None):
+    """개별 앨범 처리 (n8n 워크플로우 전체 로직) - 3단계 검색 전략"""
     print(f"{Colors.OKCYAN}  → Searching Korean platforms...{Colors.ENDC}")
 
     # 1. 한국 플랫폼 검색
@@ -505,20 +520,23 @@ def process_album(artist_ko, artist_en, album_ko, album_en):
         if result['platform_id'] == 'bugs' and result.get('album_id'):
             bugs_album_id = result['album_id']
 
-    # 2. 해외 플랫폼 검색
+    # 2. 해외 플랫폼 검색 (3단계 전략)
     print(f"{Colors.OKCYAN}  → Searching Global platforms...{Colors.ENDC}")
+    if cdma_code:
+        print(f"    CDMA Code: {cdma_code}")
 
-    search_name = artist_en if artist_en else artist_ko
-    search_album = album_en if album_en else album_ko
-
-    global_result = search_global_platforms_via_companion(search_name, search_album)
+    global_result = search_global_platforms_via_companion(
+        artist_ko, artist_en, album_ko, album_en, cdma_code
+    )
 
     global_platforms = global_result['platforms']
     global_found_count = global_result['count']
     album_cover_url = global_result['album_cover_url']
+    search_strategy = global_result.get('search_strategy')
 
     if global_found_count > 0:
-        print(f"    Companion API: {Colors.OKGREEN}✓ Found {global_found_count} platforms{Colors.ENDC}")
+        strategy_msg = f" (via {search_strategy})" if search_strategy else ""
+        print(f"    Companion API: {Colors.OKGREEN}✓ Found {global_found_count} platforms{strategy_msg}{Colors.ENDC}")
     else:
         print(f"    Companion API: {Colors.FAIL}✗ No platforms found{Colors.ENDC}")
 
@@ -596,16 +614,22 @@ def main():
         artist_en = album.get('artist_en') or ''
         album_ko = album['album_ko']
         album_en = album.get('album_en') or ''
+        cdma_code = album.get('cdma_code') or None
 
         if not artist_ko or not album_ko:
             print(f"{Colors.WARNING}[{idx}/{total}] Skipping: Missing data{Colors.ENDC}\n")
             fail_count += 1
             continue
 
-        print(f"{Colors.BOLD}[{idx}/{total}] {artist_ko} - {album_ko}{Colors.ENDC}")
+        header = f"{artist_ko} - {album_ko}"
+        if cdma_code:
+            header += f" [{cdma_code}]"
+        print(f"{Colors.BOLD}[{idx}/{total}] {header}{Colors.ENDC}")
 
         try:
-            kr_found, global_found, total_plat_found, saved_count = process_album(artist_ko, artist_en, album_ko, album_en)
+            kr_found, global_found, total_plat_found, saved_count = process_album(
+                artist_ko, artist_en, album_ko, album_en, cdma_code
+            )
 
             print(f"{Colors.OKGREEN}  ✓ Success: KR {kr_found}/5, Global {global_found}, Total {saved_count} records saved{Colors.ENDC}\n")
             success_count += 1

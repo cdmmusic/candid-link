@@ -27,11 +27,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * 캐러셀 스켈레톤 UI 생성
+ */
+function createCarouselSkeletons(count = 5) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `
+            <div class="carousel-item" style="flex-shrink: 0;">
+                <div class="skeleton skeleton-album-cover" style="width: 280px; height: 280px; border-radius: 12px;"></div>
+            </div>
+        `;
+    }
+    return html;
+}
+
+/**
  * 캐러셀 초기화
  */
 function initializeCarousel() {
     const carouselContainer = document.getElementById('hero-carousel');
     if (!carouselContainer) return;
+
+    const track = document.getElementById('carousel-track');
+    if (track) {
+        track.innerHTML = createCarouselSkeletons(5);
+    }
 
     // 이번 주 신규 발매 앨범 가져오기
     fetch('/api/albums-with-links?page=1&limit=8')
@@ -98,7 +118,16 @@ function renderCarousel(albums) {
  */
 function initializeSearch() {
     const searchInput = document.getElementById('search-input');
+    const searchIcon = document.querySelector('.search-icon');
     if (!searchInput) return;
+
+    // 검색 실행 함수
+    const performSearchAction = () => {
+        const query = searchInput.value.trim();
+        if (query) {
+            window.location.href = `/search?q=${encodeURIComponent(query)}`;
+        }
+    };
 
     // 실시간 검색 (디바운스)
     let searchTimeout;
@@ -120,12 +149,17 @@ function initializeSearch() {
     // 엔터키로 검색
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            const query = e.target.value.trim();
-            if (query) {
-                window.location.href = `/search?q=${encodeURIComponent(query)}`;
-            }
+            e.preventDefault();
+            performSearchAction();
         }
     });
+
+    // 검색 아이콘 클릭으로 검색
+    if (searchIcon) {
+        searchIcon.addEventListener('click', () => {
+            performSearchAction();
+        });
+    }
 }
 
 /**
@@ -212,9 +246,34 @@ function initializeInfiniteScroll() {
 }
 
 /**
+ * 앨범 카드 스켈레톤 UI 생성
+ */
+function createAlbumSkeletons(count = 8) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `
+            <div class="skeleton-album-card">
+                <div class="skeleton skeleton-album-cover"></div>
+                <div class="skeleton-album-info">
+                    <div class="skeleton skeleton-album-title"></div>
+                    <div class="skeleton skeleton-album-artist"></div>
+                    <div class="skeleton skeleton-album-date"></div>
+                </div>
+            </div>
+        `;
+    }
+    return html;
+}
+
+/**
  * 최신 발매 앨범 로드 (8개만)
  */
 function loadLatestAlbums() {
+    const container = document.getElementById('latest-grid');
+    if (container) {
+        container.innerHTML = createAlbumSkeletons(8);
+    }
+
     fetch('/api/albums-with-links?page=1&limit=8')
         .then(res => res.json())
         .then(data => {
@@ -228,9 +287,38 @@ function loadLatestAlbums() {
 }
 
 /**
+ * 랭킹 아이템 스켈레톤 UI 생성
+ */
+function createRankingSkeletons(count = 10) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `
+            <div class="skeleton-ranking-item">
+                <div class="skeleton skeleton-ranking-number"></div>
+                <div class="skeleton skeleton-ranking-cover"></div>
+                <div class="skeleton-ranking-info">
+                    <div class="skeleton skeleton-ranking-title"></div>
+                    <div class="skeleton skeleton-ranking-artist"></div>
+                </div>
+                <div class="skeleton-ranking-meta">
+                    <div class="skeleton skeleton-ranking-platforms"></div>
+                    <div class="skeleton skeleton-ranking-date"></div>
+                </div>
+            </div>
+        `;
+    }
+    return html;
+}
+
+/**
  * TOP 100 앨범 로드 (10개만)
  */
 function loadTop100Albums() {
+    const container = document.getElementById('top100-list');
+    if (container) {
+        container.innerHTML = createRankingSkeletons(10);
+    }
+
     // TODO: 실제 TOP 100 API가 구현되면 여기서 호출
     // 지금은 임시로 최신 앨범 9-18번째 사용
     fetch('/api/albums-with-links?page=2&limit=10')

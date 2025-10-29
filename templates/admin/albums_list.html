@@ -1,0 +1,343 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}앨범 관리{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">💿 앨범 관리</h1>
+    <p class="page-subtitle">전체 앨범 목록 및 관리</p>
+</div>
+
+<!-- Filters and Search -->
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <!-- Search -->
+        <div style="flex: 1; min-width: 250px;">
+            <input type="text" id="search-input" placeholder="아티스트 또는 앨범명 검색..."
+                   style="width: 100%; padding: 10px 16px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+        </div>
+
+        <!-- Status Filter -->
+        <select id="status-filter" style="padding: 10px 16px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+            <option value="all">전체 상태</option>
+            <option value="complete">수집 완료</option>
+            <option value="partial">부분 수집</option>
+            <option value="empty">미수집</option>
+        </select>
+
+        <!-- Add Button -->
+        <button onclick="location.href='/admin/albums/add'"
+                style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            ➕ 앨범 추가
+        </button>
+    </div>
+</div>
+
+<!-- Albums Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title">앨범 목록</h2>
+        <div id="total-count" style="color: #6c757d; font-size: 14px;">-</div>
+    </div>
+
+    <div id="albums-table">
+        <div style="text-align: center; padding: 60px 20px; color: #6c757d;">
+            앨범 목록 로딩 중...
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" style="display: flex; justify-content: center; gap: 10px; padding: 20px; border-top: 1px solid #e9ecef;">
+        <!-- Pagination will be inserted here -->
+    </div>
+</div>
+
+<style>
+    .albums-table-header {
+        display: grid;
+        grid-template-columns: 80px 1fr 250px 150px 100px 80px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .albums-table-row {
+        display: grid;
+        grid-template-columns: 80px 1fr 250px 150px 100px 80px;
+        padding: 15px 20px;
+        align-items: center;
+        border-bottom: 1px solid #f1f3f5;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .albums-table-row:hover {
+        background: #f8f9fa;
+    }
+
+    .album-cover-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #e9ecef;
+    }
+
+    .album-title-cell {
+        font-weight: 600;
+        color: #212529;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .artist-cell {
+        color: #495057;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .date-cell {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-complete {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-partial {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-empty {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+        background: #0056b3;
+    }
+
+    .pagination-btn {
+        padding: 8px 16px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    @media (max-width: 1200px) {
+        .albums-table-header,
+        .albums-table-row {
+            grid-template-columns: 60px 1fr 200px 120px 80px;
+        }
+
+        .date-cell {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .albums-table-header {
+            display: none;
+        }
+
+        .albums-table-row {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 15px;
+        }
+    }
+</style>
+
+<script>
+    let currentPage = 1;
+    let currentSearch = '';
+    let currentStatus = 'all';
+
+    // 앨범 목록 로드
+    async function loadAlbums(page = 1) {
+        currentPage = page;
+
+        try {
+            const params = new URLSearchParams({
+                page: page,
+                limit: 50,
+                search: currentSearch,
+                status: currentStatus
+            });
+
+            const response = await fetch(`/admin/api/albums?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                renderAlbumsTable(data.albums);
+                renderPagination(data);
+                document.getElementById('total-count').textContent = `총 ${data.total.toLocaleString()}개`;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            console.error('앨범 로드 실패:', error);
+            document.getElementById('albums-table').innerHTML =
+                `<div style="text-align: center; padding: 60px 20px; color: #e74c3c;">⚠️ ${error.message}</div>`;
+        }
+    }
+
+    function renderAlbumsTable(albums) {
+        const container = document.getElementById('albums-table');
+
+        if (!albums || albums.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #6c757d;">검색 결과가 없습니다</div>';
+            return;
+        }
+
+        const headerHtml = `
+            <div class="albums-table-header">
+                <div>커버</div>
+                <div>앨범</div>
+                <div>아티스트</div>
+                <div>발매일</div>
+                <div>상태</div>
+                <div>작업</div>
+            </div>
+        `;
+
+        const rowsHtml = albums.map(album => {
+            const coverHtml = album.album_cover_url ?
+                `<img src="${album.album_cover_url}" class="album-cover-small" onerror="this.style.display='none'">` :
+                '<div class="album-cover-small"></div>';
+
+            const releaseDate = album.release_date ? album.release_date.substring(0, 10) : '미정';
+
+            let statusClass = 'status-empty';
+            let statusText = '미수집';
+            if (album.found_platforms === album.total_platforms) {
+                statusClass = 'status-complete';
+                statusText = '완료';
+            } else if (album.found_platforms > 0) {
+                statusClass = 'status-partial';
+                statusText = `${album.found_platforms}/${album.total_platforms}`;
+            }
+
+            const albumId = encodeURIComponent(album.artist_ko + '|||' + album.album_ko);
+
+            return `
+                <div class="albums-table-row" onclick="location.href='/admin/albums/${albumId}'">
+                    <div>${coverHtml}</div>
+                    <div class="album-title-cell">${album.album_ko}</div>
+                    <div class="artist-cell">${album.artist_ko}</div>
+                    <div class="date-cell">${releaseDate}</div>
+                    <div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div>
+                        <button class="action-btn" onclick="event.stopPropagation(); location.href='/admin/albums/${albumId}'">
+                            수정
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = headerHtml + rowsHtml;
+    }
+
+    function renderPagination(data) {
+        const container = document.getElementById('pagination');
+        const totalPages = Math.ceil(data.total / data.limit);
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        // Previous button
+        html += `<button class="pagination-btn" onclick="loadAlbums(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+            ← 이전
+        </button>`;
+
+        // Page numbers (show max 5 pages)
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="loadAlbums(${i})">
+                ${i}
+            </button>`;
+        }
+
+        // Next button
+        html += `<button class="pagination-btn" onclick="loadAlbums(${currentPage + 1})" ${!data.has_more ? 'disabled' : ''}>
+            다음 →
+        </button>`;
+
+        container.innerHTML = html;
+    }
+
+    // 검색
+    let searchTimeout;
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = e.target.value.trim();
+            loadAlbums(1);
+        }, 500);
+    });
+
+    // 상태 필터
+    document.getElementById('status-filter').addEventListener('change', (e) => {
+        currentStatus = e.target.value;
+        loadAlbums(1);
+    });
+
+    // 초기 로드
+    loadAlbums();
+</script>
+{% endblock %}

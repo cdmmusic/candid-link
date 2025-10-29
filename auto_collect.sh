@@ -1,80 +1,81 @@
 #!/bin/bash
-# 자동 링크 수집 스크립트
-# 사용법: ./auto_collect.sh [배치크기]
-# 예시: ./auto_collect.sh 50  # 50개 앨범 수집
 
-set -e
+# 전체 자동 수집 스크립트
+# 배치 2부터 끝까지 순차적으로 실행
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+BATCH_SIZE=100
+START_BATCH=${1:-2}  # 기본값 2 (배치 1은 이미 완료)
+END_BATCH=${2:-52}   # 기본값 52 (총 5103개 앨범 ÷ 100)
 
-# 색상
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
-
-# 로그 디렉토리
-LOG_DIR="$SCRIPT_DIR/logs"
-mkdir -p "$LOG_DIR"
-
-# 로그 파일
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOG_FILE="$LOG_DIR/auto_collect_$TIMESTAMP.log"
-
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  🤖 자동 링크 수집 시작${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo "=========================================="
+echo "  전체 자동 수집 시작"
+echo "=========================================="
+echo ""
+echo "시작 배치: $START_BATCH"
+echo "종료 배치: $END_BATCH"
+echo "배치 크기: $BATCH_SIZE"
+echo ""
+echo "예상 총 배치 수: $((END_BATCH - START_BATCH + 1))"
+echo ""
+echo "자동 수집 모드: 모든 배치를 연속 실행합니다."
 echo ""
 
-# 환경 변수 로드
-if [ -f .env ]; then
-    echo -e "${GREEN}✓${NC} 환경 변수 로드 중..."
-    export $(cat .env | grep -v '^#' | xargs)
-else
-    echo -e "${RED}✗${NC} .env 파일이 없습니다"
-    exit 1
-fi
+# 시작 시간 기록
+TOTAL_START=$(date +%s)
 
-# Docker 서비스 확인
-echo -e "${BLUE}🐳 Docker 서비스 확인...${NC}"
-if ! docker ps --filter "name=album-links-companion-api" | grep -q "companion-api"; then
-    echo -e "${YELLOW}⚠${NC}  Companion API 시작 중..."
-    docker-compose up -d companion-api selenium-chrome
-    echo -e "${YELLOW}⏳${NC} 초기화 대기 (20초)..."
-    sleep 20
-else
-    echo -e "${GREEN}✓${NC} Companion API 실행 중"
-fi
+# 성공/실패 카운터
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+
+for batch in $(seq $START_BATCH $END_BATCH); do
+    echo ""
+    echo "=========================================="
+    echo "  배치 $batch / $END_BATCH 실행 중..."
+    echo "=========================================="
+    echo ""
+
+    # 배치 실행
+    if ./run_batch.sh $batch; then
+        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        echo "✓ 배치 $batch 성공"
+    else
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        echo "✗ 배치 $batch 실패 (계속 진행)"
+    fi
+
+    # 진행률 표시
+    PROGRESS=$((batch - START_BATCH + 1))
+    TOTAL=$((END_BATCH - START_BATCH + 1))
+    PERCENT=$((PROGRESS * 100 / TOTAL))
+    echo ""
+    echo "진행률: $PROGRESS / $TOTAL ($PERCENT%)"
+    echo "성공: $SUCCESS_COUNT | 실패: $FAIL_COUNT"
+    echo ""
+
+    # 배치 간 대기 (서버 부하 방지)
+    if [ $batch -lt $END_BATCH ]; then
+        echo "다음 배치까지 5초 대기..."
+        sleep 5
+    fi
+done
+
+# 종료 시간 및 총 소요 시간
+TOTAL_END=$(date +%s)
+TOTAL_DURATION=$((TOTAL_END - TOTAL_START))
+HOURS=$((TOTAL_DURATION / 3600))
+MINUTES=$(((TOTAL_DURATION % 3600) / 60))
+SECONDS=$((TOTAL_DURATION % 60))
+
 echo ""
-
-# 배치 크기 (기본값: 20)
-BATCH_SIZE=${1:-20}
-
-echo -e "${BLUE}📊 수집 설정${NC}"
-echo -e "   배치 크기: ${YELLOW}${BATCH_SIZE}개${NC} 앨범"
-echo -e "   로그 파일: ${YELLOW}${LOG_FILE}${NC}"
+echo "=========================================="
+echo "  전체 수집 완료"
+echo "=========================================="
 echo ""
-
-# 수집 시작
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  🚀 수집 실행${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo "총 배치 수: $((SUCCESS_COUNT + FAIL_COUNT))"
+echo "성공: $SUCCESS_COUNT"
+echo "실패: $FAIL_COUNT"
+echo "총 소요 시간: ${HOURS}시간 ${MINUTES}분 ${SECONDS}초"
 echo ""
-
-# Python 스크립트 실행 (stdout과 파일 모두 출력)
-python3 collect_n8n_style.py $BATCH_SIZE 2>&1 | tee "$LOG_FILE"
-
-EXIT_CODE=$?
-
-echo ""
-if [ $EXIT_CODE -eq 0 ]; then
-    echo -e "${GREEN}✅ 수집 완료!${NC}"
-else
-    echo -e "${RED}❌ 수집 실패 (Exit code: $EXIT_CODE)${NC}"
-fi
-
-echo ""
-echo -e "💡 로그 파일: ${YELLOW}${LOG_FILE}${NC}"
+echo "실패 추적 리포트 생성:"
+echo "  TURSO_DATABASE_URL='...' TURSO_AUTH_TOKEN='...' python3 track_failures.py"
 echo ""

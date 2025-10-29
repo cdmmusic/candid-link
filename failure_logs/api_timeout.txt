@@ -1,0 +1,7 @@
+[2025-10-28 20:24:23] CDMA03520 | 알레이 (AL LAY) | SICK | Request timeout (30s)
+[2025-10-28 20:24:55] CDMA03563 | 주드 킴 | Gift; it was all love | Request timeout (30s)
+[2025-10-28 20:32:52] CDMA03520 | 알레이 (AL LAY) | SICK | Request timeout (30s)
+[2025-10-28 20:33:24] CDMA03563 | 주드 킴 | Gift; it was all love | Request timeout (30s)
+[2025-10-28 20:33:56] CDMA03620 | 김종호 | 슬프다 | Request timeout (30s)
+[2025-10-28 22:22:52] CDMA05110 | 불꽃(FLAME) | 가을…그리고 추억 | Request timeout (120s)
+[2025-10-29 10:01:50] CDMA04507 | 규원 | 달의 뒷면을 걷다 | Request timeout (120s)

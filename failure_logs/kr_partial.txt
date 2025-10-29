@@ -1,0 +1,131 @@
+[2025-10-28 22:20:25] CDMA03418 | Soh’uds | Uncharted Sea | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-28 22:24:03] CDMA05108 | JINAN JINAN | مين إنت بالحقيقة؟ | KR: flo | Found 1/5 platforms
+[2025-10-28 22:27:04] CDMA05105 | LightYoung(라이트영) | 난 아직도 많이 어린가봐 (feat. DRO) | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-28 22:30:52] CDMA05101 | UNCLE GYM, YS Block | 카카시 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-28 22:32:50] CDMA05099 | 23, 유비, 최도준 | YELLOW TALKIN | KR: bugs, flo | Found 2/5 platforms
+[2025-10-28 22:34:47] CDMA05097 | 알레프 (ALEPH) | Y | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-28 22:37:44] CDMA05094 | IKASÉ(이카세), PINO | HITMAKER | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-28 22:46:48] CDMA05085 | 제니민 | Midnight Wings | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-28 22:48:04] CDMA05084 | 이세영 | 숨 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-28 22:55:34] CDMA05074 | 신종욱 | [비형전: 도깨비의 주인] OST Part 4 | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-28 22:56:31] CDMA05073 | 김태윤 | [비형전: 도깨비의 주인] OST Part 3 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-28 22:57:24] CDMA05072 | Can-O, beedrillboi | welcome | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-28 23:06:08] CDMA05064 | Saint Kream,Dgmz | AMG | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-28 23:34:02] CDMA05036 | Peera Tear (피라티어) | 도시, 밤 그리고… | KR: melon, vibe | Found 2/5 platforms
+[2025-10-28 23:37:04] CDMA05033 | 김태윤 | [비형전: 도깨비의 주인] OST Part 2 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 00:12:18] CDMA05108 | JINAN JINAN | مين إنت بالحقيقة؟ | KR: flo | Found 1/5 platforms
+[2025-10-29 00:13:54] CDMA05105 | LightYoung(라이트영) | 난 아직도 많이 어린가봐 (feat. DRO) | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 00:15:09] CDMA05101 | UNCLE GYM, YS Block | 카카시 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 00:16:22] CDMA05099 | 23, 유비, 최도준 | YELLOW TALKIN | KR: bugs, flo | Found 2/5 platforms
+[2025-10-29 00:17:25] CDMA05094 | IKASÉ(이카세), PINO | HITMAKER | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 00:19:03] CDMA05085 | 제니민 | Midnight Wings | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 00:20:49] CDMA05084 | 이세영 | 숨 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 00:23:11] CDMA05074 | 신종욱 | [비형전: 도깨비의 주인] OST Part 4 | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 00:24:06] CDMA05072 | Can-O, beedrillboi | welcome | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 00:25:01] CDMA05070 | 김재흥 | 김재흥디지털싱글 | KR: flo | Found 1/5 platforms
+[2025-10-29 00:25:54] CDMA05064 | Saint Kream,Dgmz | AMG | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 00:26:50] CDMA05036 | Peera Tear (피라티어) | 도시, 밤 그리고… | KR: melon, vibe | Found 2/5 platforms
+[2025-10-29 00:27:49] CDMA05026 | Den synn, woozy | freedom | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 00:34:39] CDMA05019 | 준 | [비형전: 도깨비의 주인] OST Part 1 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 01:01:57] CDMA04995 | 정의진, Castle Zane | 젊은 우리 사망 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 01:24:17] CDMA04973 | 박두리 | [비형전: 도깨비의 주인] ost - bgm collection | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 01:32:55] CDMA04964 | 행복한피자빵 | 왜 자꾸 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 01:33:57] CDMA04963 | hrhr | Kandycrystal<3 | KR: bugs, melon, vibe | Found 3/5 platforms
+[2025-10-29 01:41:31] CDMA04956 | soberdose420 | 쾌락중독자 | KR: bugs, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 01:49:14] CDMA04947 | HPMD | Bloomphonic in the forest | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 01:51:01] CDMA04945 | Studio 17 | 첫 번째 이야기 | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 01:52:51] CDMA04943 | 장사은 | FourSilver | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 02:02:18] CDMA04933 | 표효일 | 무슨 기분일까… | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 02:05:57] CDMA04929 | wishing4hue,alvin | FADED | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 02:15:52] CDMA04918 | 위대한쇼츠비 | Lucky Bag | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 02:19:36] CDMA04914 | ZANDY BABIE, 압둘레만 | 19 | KR: bugs, flo, melon | Found 3/5 platforms
+[2025-10-29 02:31:54] CDMA04900 | 김요섭 | 김요섭 9집 정규앨범”벗” | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 02:35:41] CDMA04896 | Kasai Zenn | We Careless (Feat. DOVII & Kobane) | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 02:40:12] CDMA04891 | 주익백,Coincide | I:LY | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 03:02:01] CDMA04866 | IKASÉ(이카세), PINO | IKASE PINO TYPE BEAT | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 03:12:49] CDMA04854 | 행복한피자빵 | サバ焼き飽きた | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 03:19:09] CDMA04847 | YnG Lif3 | Monlcer | KR: genie | Found 1/5 platforms
+[2025-10-29 03:25:27] CDMA04840 | 01, 와이챈스(Whychns) | TEXHO135. | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 03:34:28] CDMA04830 | 레이싱4 | 오구오구 | KR: flo, genie | Found 2/5 platforms
+[2025-10-29 03:37:08] CDMA04826 | IKASÉ(이카세) | NANNOM REMIXES | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 03:58:50] CDMA04801 | Foti8 | Foti8 2nd EP ‘BLUE GEM’ | KR: bugs, flo, melon | Found 3/5 platforms
+[2025-10-29 04:09:49] CDMA04788 | Chang | 아가피무 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 04:15:33] CDMA04782 | 행복한피자빵 | マカロンに挟むクリームになりたい | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 04:34:35] CDMA04761 | Pearlbaby, 0theo | brand new love | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 04:46:33] CDMA04748 | Tina Groove | Bubble Pop | KR: genie | Found 1/5 platforms
+[2025-10-29 05:05:35] CDMA04729 | 행복한피자빵 | 미안한데 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 05:22:11] CDMA04712 | Project:TNT, AsianLean, BANDO SURA | BlakJeans | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 05:53:35] CDMA04678 | 로몬스 | Lomon's dream | KR: bugs, vibe | Found 2/5 platforms
+[2025-10-29 05:59:55] CDMA04670 | NY KID, NY DOGG | 너와 함께라면 | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 06:07:17] CDMA04662 | 행복한피자빵 | 액자 속에 내가 든 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 06:27:57] CDMA04636 | Lucas | 가출 꿈 | KR: genie | Found 1/5 platforms
+[2025-10-29 06:40:37] CDMA04623 | 비트건(BEAT GUN) | Wäin oder Wodka | KR: flo, melon, vibe | Found 3/5 platforms
+[2025-10-29 06:48:36] CDMA04615 | 룡운 | Ghosts with Sneakers | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 07:23:54] CDMA04579 | 행복한피자빵 | 중2야 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 07:43:52] CDMA04557 | 정승민(D-track),Beenssalo,Dong-gil,주안(ZUAN) | Half way | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 07:49:56] CDMA04550 | (E)AnD-Y (엔드와이), 에프비 (Fbe), 오원탁 | Staff Olny (In Summer) | KR: genie | Found 1/5 platforms
+[2025-10-29 07:53:11] CDMA04547 | 헤아림 (HÉARiM) | 헤는 밤 | KR: bugs, melon, vibe | Found 3/5 platforms
+[2025-10-29 08:01:39] CDMA04538 | 류민서 | Lost | KR: bugs | Found 1/5 platforms
+[2025-10-29 08:14:54] CDMA04524 | KUNN, Coincide | overthink | KR: bugs, genie, vibe | Found 3/5 platforms
+[2025-10-29 08:21:01] CDMA04518 | Coincide,KUNN | Runaway | KR: genie, vibe | Found 2/5 platforms
+[2025-10-29 08:24:21] CDMA04515 | Coincide,Chansoo | Ride With Me | KR: genie | Found 1/5 platforms
+[2025-10-29 08:26:18] CDMA04513 | GAMBLR. | ONLY ONE | KR: genie, vibe | Found 2/5 platforms
+[2025-10-29 09:02:32] CDMA05108 | JINAN JINAN | مين إنت بالحقيقة؟ | KR: flo | Found 1/5 platforms
+[2025-10-29 09:04:56] CDMA05101 | UNCLE GYM, YS Block | 카카시 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:06:14] CDMA05099 | 23, 유비, 최도준 | YELLOW TALKIN | KR: bugs, flo | Found 2/5 platforms
+[2025-10-29 09:07:22] CDMA05094 | IKASÉ(이카세), PINO | HITMAKER | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:09:40] CDMA05085 | 제니민 | Midnight Wings | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:10:36] CDMA05084 | 이세영 | 숨 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:13:21] CDMA05074 | 신종욱 | [비형전: 도깨비의 주인] OST Part 4 | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 09:14:17] CDMA05072 | Can-O, beedrillboi | welcome | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 09:15:39] CDMA05070 | 김재흥 | 김재흥디지털싱글 | KR: flo | Found 1/5 platforms
+[2025-10-29 09:16:56] CDMA05064 | Saint Kream,Dgmz | AMG | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 09:18:01] CDMA05036 | Peera Tear (피라티어) | 도시, 밤 그리고… | KR: melon, vibe | Found 2/5 platforms
+[2025-10-29 09:19:13] CDMA04964 | 행복한피자빵 | 왜 자꾸 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:20:20] CDMA04963 | hrhr | Kandycrystal<3 | KR: bugs, melon, vibe | Found 3/5 platforms
+[2025-10-29 09:22:23] CDMA04947 | HPMD | Bloomphonic in the forest | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:23:15] CDMA04945 | Studio 17 | 첫 번째 이야기 | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:24:10] CDMA04943 | 장사은 | FourSilver | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:25:17] CDMA04933 | 표효일 | 무슨 기분일까… | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:26:13] CDMA04918 | 위대한쇼츠비 | Lucky Bag | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:27:13] CDMA04914 | ZANDY BABIE, 압둘레만 | 19 | KR: bugs, flo, melon | Found 3/5 platforms
+[2025-10-29 09:28:35] CDMA04900 | 김요섭 | 김요섭 9집 정규앨범”벗” | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:30:04] CDMA04896 | Kasai Zenn | We Careless (Feat. DOVII & Kobane) | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:31:08] CDMA04891 | 주익백,Coincide | I:LY | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 09:32:03] CDMA04866 | IKASÉ(이카세), PINO | IKASE PINO TYPE BEAT | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:32:55] CDMA04854 | 행복한피자빵 | サバ焼き飽きた | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:33:46] CDMA04847 | YnG Lif3 | Monlcer | KR: genie | Found 1/5 platforms
+[2025-10-29 09:35:35] CDMA04840 | 01, 와이챈스(Whychns) | TEXHO135. | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:36:30] CDMA04830 | 레이싱4 | 오구오구 | KR: flo, genie | Found 2/5 platforms
+[2025-10-29 09:37:25] CDMA04826 | IKASÉ(이카세) | NANNOM REMIXES | KR: bugs, flo, melon, vibe | Found 4/5 platforms
+[2025-10-29 09:38:18] CDMA04801 | Foti8 | Foti8 2nd EP ‘BLUE GEM’ | KR: bugs, flo, melon | Found 3/5 platforms
+[2025-10-29 09:39:10] CDMA04788 | Chang | 아가피무 | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:40:02] CDMA04782 | 행복한피자빵 | マカロンに挟むクリームになりたい | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:40:58] CDMA04761 | Pearlbaby, 0theo | brand new love | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:42:50] CDMA04748 | Tina Groove | Bubble Pop | KR: genie | Found 1/5 platforms
+[2025-10-29 09:43:49] CDMA04729 | 행복한피자빵 | 미안한데 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:44:44] CDMA04678 | 로몬스 | Lomon's dream | KR: bugs, vibe | Found 2/5 platforms
+[2025-10-29 09:45:36] CDMA04670 | NY KID, NY DOGG | 너와 함께라면 | KR: flo, genie, melon | Found 3/5 platforms
+[2025-10-29 09:46:29] CDMA04662 | 행복한피자빵 | 액자 속에 내가 든 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:47:22] CDMA04636 | Lucas | 가출 꿈 | KR: genie | Found 1/5 platforms
+[2025-10-29 09:48:15] CDMA04623 | 비트건(BEAT GUN) | Wäin oder Wodka | KR: flo, melon, vibe | Found 3/5 platforms
+[2025-10-29 09:49:07] CDMA04615 | 룡운 | Ghosts with Sneakers | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:50:00] CDMA04579 | 행복한피자빵 | 중2야 | KR: bugs, flo, genie, vibe | Found 4/5 platforms
+[2025-10-29 09:51:59] CDMA04557 | 정승민(D-track),Beenssalo,Dong-gil,주안(ZUAN) | Half way | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 09:53:01] CDMA04550 | (E)AnD-Y (엔드와이), 에프비 (Fbe), 오원탁 | Staff Olny (In Summer) | KR: genie | Found 1/5 platforms
+[2025-10-29 09:54:05] CDMA04547 | 헤아림 (HÉARiM) | 헤는 밤 | KR: bugs, melon, vibe | Found 3/5 platforms
+[2025-10-29 09:55:04] CDMA04538 | 류민서 | Lost | KR: bugs | Found 1/5 platforms
+[2025-10-29 09:56:04] CDMA04524 | KUNN, Coincide | overthink | KR: bugs, genie, vibe | Found 3/5 platforms
+[2025-10-29 09:57:56] CDMA04518 | Coincide,KUNN | Runaway | KR: genie, vibe | Found 2/5 platforms
+[2025-10-29 09:58:53] CDMA04515 | Coincide,Chansoo | Ride With Me | KR: genie | Found 1/5 platforms
+[2025-10-29 09:59:49] CDMA04513 | GAMBLR. | ONLY ONE | KR: genie, vibe | Found 2/5 platforms
+[2025-10-29 10:20:18] CDMA04484 | Jaymensy (제이멘시) | 고군분투 | KR: flo, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 10:37:06] CDMA04463 | Asi.K (애시케이), 살로 (SALO) | BFTL Boys From The Last | KR: bugs, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 10:40:30] CDMA04460 | kimhugo | RS | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 10:54:36] CDMA04447 | 누시 | Numb | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 11:01:35] CDMA04440 | ETIK, MATA, Pablo Wang | South Side | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 11:04:41] CDMA04437 | Neo Value | 네오밸류 | KR: genie, melon | Found 2/5 platforms
+[2025-10-29 11:11:19] CDMA04431 | Mood | 짝사랑 | KR: bugs, genie, melon, vibe | Found 4/5 platforms
+[2025-10-29 11:16:42] CDMA04426 | Hanmoo | Hanmoo history | KR: bugs, flo, genie, melon | Found 4/5 platforms
+[2025-10-29 11:26:13] CDMA04419 | 크리스 가디(CHRIS GUARDY) | POST A JEALOUSY | KR: bugs, flo, melon | Found 3/5 platforms
+[2025-10-29 11:29:16] CDMA04416 | Lynte, BIGWISE | Money, Love & Peace | KR: bugs, flo, melon, vibe | Found 4/5 platforms

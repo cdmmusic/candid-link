@@ -1,0 +1,340 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}플랫폼 링크 관리{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🎵 플랫폼 링크 관리</h1>
+    <p class="page-subtitle">플랫폼별 링크 상태 및 CSV 내보내기</p>
+</div>
+
+<!-- Platform Stats -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h2 class="card-title">플랫폼별 통계</h2>
+    </div>
+    <div id="platform-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+        <div style="text-align: center; padding: 40px; color: #6c757d;">통계 로딩 중...</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <select id="platform-filter" style="padding: 10px 16px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+            <option value="all">전체 플랫폼</option>
+        </select>
+
+        <select id="status-filter" style="padding: 10px 16px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+            <option value="all">전체 상태</option>
+            <option value="found">수집됨</option>
+            <option value="not_found">미수집</option>
+        </select>
+
+        <div style="flex: 1;"></div>
+
+        <button onclick="exportCSV()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            📥 CSV 내보내기
+        </button>
+    </div>
+</div>
+
+<!-- Platform Links Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title">플랫폼 링크 목록</h2>
+        <div id="total-count" style="color: #6c757d; font-size: 14px;">-</div>
+    </div>
+
+    <div id="links-table">
+        <div style="text-align: center; padding: 60px 20px; color: #6c757d;">로딩 중...</div>
+    </div>
+
+    <div id="pagination" style="display: flex; justify-content: center; gap: 10px; padding: 20px; border-top: 1px solid #e9ecef;"></div>
+</div>
+
+<style>
+    .stat-box {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.2s;
+    }
+
+    .stat-box:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+    }
+
+    .stat-platform-name {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .stat-numbers {
+        display: flex;
+        gap: 15px;
+        font-size: 14px;
+    }
+
+    .stat-number {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-number-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #007bff;
+    }
+
+    .stat-number-label {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .links-table-header {
+        display: grid;
+        grid-template-columns: 200px 1fr 200px 150px 100px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .links-table-row {
+        display: grid;
+        grid-template-columns: 200px 1fr 200px 150px 100px;
+        padding: 15px 20px;
+        align-items: center;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .platform-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #e9ecef;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .url-cell {
+        font-size: 13px;
+        color: #007bff;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .status-indicator-small {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .status-found {
+        background: #28a745;
+    }
+
+    .status-not-found {
+        background: #dc3545;
+    }
+</style>
+
+<script>
+    let currentPage = 1;
+    let currentPlatform = 'all';
+    let currentStatus = 'all';
+    let platformsList = [];
+
+    // 플랫폼 통계 로드
+    async function loadPlatformStats() {
+        try {
+            const response = await fetch('/admin/api/platforms/stats');
+            const data = await response.json();
+
+            if (data.success) {
+                renderPlatformStats(data.stats);
+                populatePlatformFilter(data.stats);
+            }
+        } catch (error) {
+            console.error('플랫폼 통계 로드 실패:', error);
+        }
+    }
+
+    function renderPlatformStats(stats) {
+        const container = document.getElementById('platform-stats-grid');
+
+        if (!stats || stats.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6c757d;">통계가 없습니다</div>';
+            return;
+        }
+
+        platformsList = stats;
+
+        const html = stats.map(stat => {
+            const completion = stat.total > 0 ? Math.round(stat.found_count / stat.total * 100) : 0;
+
+            return `
+                <div class="stat-box">
+                    <div class="stat-platform-name">${stat.platform_name}</div>
+                    <div class="stat-numbers">
+                        <div class="stat-number">
+                            <div class="stat-number-value">${stat.found_count.toLocaleString()}</div>
+                            <div class="stat-number-label">수집</div>
+                        </div>
+                        <div class="stat-number">
+                            <div class="stat-number-value">${stat.total.toLocaleString()}</div>
+                            <div class="stat-number-label">전체</div>
+                        </div>
+                        <div class="stat-number">
+                            <div class="stat-number-value">${completion}%</div>
+                            <div class="stat-number-label">완료율</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+    }
+
+    function populatePlatformFilter(stats) {
+        const select = document.getElementById('platform-filter');
+        const options = stats.map(stat =>
+            `<option value="${stat.platform_name}">${stat.platform_name}</option>`
+        ).join('');
+        select.innerHTML = '<option value="all">전체 플랫폼</option>' + options;
+    }
+
+    // 링크 목록 로드
+    async function loadLinks(page = 1) {
+        currentPage = page;
+
+        try {
+            const params = new URLSearchParams({
+                page: page,
+                limit: 50,
+                platform: currentPlatform,
+                status: currentStatus
+            });
+
+            const response = await fetch(`/admin/api/platforms?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                renderLinksTable(data.links);
+                renderPagination(data);
+                document.getElementById('total-count').textContent = `총 ${data.total.toLocaleString()}개`;
+            }
+        } catch (error) {
+            console.error('링크 로드 실패:', error);
+        }
+    }
+
+    function renderLinksTable(links) {
+        const container = document.getElementById('links-table');
+
+        if (!links || links.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #6c757d;">데이터가 없습니다</div>';
+            return;
+        }
+
+        const headerHtml = `
+            <div class="links-table-header">
+                <div>플랫폼</div>
+                <div>앨범</div>
+                <div>아티스트</div>
+                <div>URL</div>
+                <div>상태</div>
+            </div>
+        `;
+
+        const rowsHtml = links.map(link => {
+            const statusClass = link.found ? 'status-found' : 'status-not-found';
+            const statusText = link.found ? '수집됨' : '미수집';
+
+            return `
+                <div class="links-table-row">
+                    <div>
+                        <span class="platform-badge">${link.platform_name}</span>
+                    </div>
+                    <div style="font-weight: 500;">${link.album_ko}</div>
+                    <div style="color: #6c757d;">${link.artist_ko}</div>
+                    <div class="url-cell">${link.platform_url || '-'}</div>
+                    <div>
+                        <span class="status-indicator-small ${statusClass}"></span>
+                        <span style="font-size: 13px;">${statusText}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = headerHtml + rowsHtml;
+    }
+
+    function renderPagination(data) {
+        const container = document.getElementById('pagination');
+        const totalPages = Math.ceil(data.total / data.limit);
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        html += `<button class="pagination-btn" onclick="loadLinks(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+            ← 이전
+        </button>`;
+
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="loadLinks(${i})">
+                ${i}
+            </button>`;
+        }
+
+        html += `<button class="pagination-btn" onclick="loadLinks(${currentPage + 1})" ${!data.has_more ? 'disabled' : ''}>
+            다음 →
+        </button>`;
+
+        container.innerHTML = html;
+    }
+
+    // CSV 내보내기
+    function exportCSV() {
+        const params = new URLSearchParams({
+            platform: currentPlatform,
+            status: currentStatus
+        });
+
+        window.location.href = `/admin/api/platforms/export?${params}`;
+    }
+
+    // 필터 이벤트
+    document.getElementById('platform-filter').addEventListener('change', (e) => {
+        currentPlatform = e.target.value;
+        loadLinks(1);
+    });
+
+    document.getElementById('status-filter').addEventListener('change', (e) => {
+        currentStatus = e.target.value;
+        loadLinks(1);
+    });
+
+    // 초기 로드
+    loadPlatformStats();
+    loadLinks();
+</script>
+{% endblock %}

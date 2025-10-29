@@ -1,0 +1,270 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}일괄 작업{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🔧 일괄 작업 도구</h1>
+    <p class="page-subtitle">Excel import, 중복 제거 등 대량 데이터 작업</p>
+</div>
+
+<!-- Excel Import -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h2 class="card-title">📥 Excel 파일 Import</h2>
+    </div>
+    <div>
+        <p style="color: #6c757d; margin-bottom: 15px;">
+            Excel 파일을 업로드하여 앨범 정보를 일괄 등록합니다. 필수 컬럼: <code>artist_ko</code>, <code>album_ko</code>
+        </p>
+
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <input type="file" id="excel-file" accept=".xlsx,.xls"
+                   style="flex: 1; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px;">
+            <button onclick="importExcel()" class="btn-import">
+                ⬆️ 업로드 및 Import
+            </button>
+        </div>
+
+        <div id="import-result" style="margin-top: 15px;"></div>
+    </div>
+</div>
+
+<!-- Clean Duplicates -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h2 class="card-title">🧹 중복 데이터 정리</h2>
+    </div>
+    <div>
+        <p style="color: #6c757d; margin-bottom: 15px;">
+            동일한 앨범에 대해 중복된 플랫폼 링크를 찾아서 제거합니다.
+        </p>
+
+        <button onclick="cleanDuplicates()" class="btn-clean">
+            🗑️ 중복 데이터 정리
+        </button>
+
+        <div id="clean-result" style="margin-top: 15px;"></div>
+    </div>
+</div>
+
+<!-- Database Stats -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">📊 데이터베이스 통계</h2>
+    </div>
+    <div id="db-stats">
+        <div style="text-align: center; padding: 40px; color: #6c757d;">통계 로딩 중...</div>
+    </div>
+</div>
+
+<style>
+    .btn-import {
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-import:hover {
+        background: #0056b3;
+    }
+
+    .btn-clean {
+        padding: 12px 24px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-clean:hover {
+        background: #c82333;
+    }
+
+    .result-box {
+        padding: 14px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .result-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .result-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .result-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .stat-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .stat-item-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+
+    .stat-item-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #007bff;
+    }
+</style>
+
+<script>
+    // Excel Import
+    async function importExcel() {
+        const fileInput = document.getElementById('excel-file');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            showResult('import-result', '파일을 선택해주세요', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        showResult('import-result', '업로드 중...', 'info');
+
+        try {
+            const response = await fetch('/admin/api/bulk/import-excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showResult('import-result', `✅ ${data.message}`, 'success');
+                fileInput.value = '';
+                setTimeout(() => loadDbStats(), 1000);
+            } else {
+                showResult('import-result', `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            showResult('import-result', `❌ 업로드 실패: ${error.message}`, 'error');
+        }
+    }
+
+    // Clean Duplicates
+    async function cleanDuplicates() {
+        if (!confirm('중복 데이터를 정리하시겠습니까?\n\n최신 레코드만 남기고 나머지는 삭제됩니다.')) {
+            return;
+        }
+
+        showResult('clean-result', '중복 검사 중...', 'info');
+
+        try {
+            const response = await fetch('/admin/api/bulk/clean-duplicates', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showResult('clean-result', `✅ ${data.message}`, 'success');
+                setTimeout(() => loadDbStats(), 1000);
+            } else {
+                showResult('clean-result', `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            showResult('clean-result', `❌ 정리 실패: ${error.message}`, 'error');
+        }
+    }
+
+    function showResult(containerId, message, type) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = `<div class="result-box result-${type}">${message}</div>`;
+    }
+
+    // Database Stats
+    async function loadDbStats() {
+        try {
+            const response = await fetch('/admin/api/stats');
+            const data = await response.json();
+
+            if (data.success) {
+                renderDbStats(data.stats);
+            }
+        } catch (error) {
+            console.error('통계 로드 실패:', error);
+        }
+    }
+
+    function renderDbStats(stats) {
+        const container = document.getElementById('db-stats');
+
+        const html = `
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-item-label">전체 앨범</div>
+                    <div class="stat-item-value">${stats.total_albums.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">전체 링크</div>
+                    <div class="stat-item-value">${stats.total_links.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">수집된 링크</div>
+                    <div class="stat-item-value">${stats.found_links.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">수집 완료율</div>
+                    <div class="stat-item-value">${stats.completion_rate}%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">커버 이미지</div>
+                    <div class="stat-item-value">${stats.albums_with_cover.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">최근 7일 업데이트</div>
+                    <div class="stat-item-value">${stats.recent_updates.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    // 초기 로드
+    loadDbStats();
+</script>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}실패 추적{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">⚠️ 실패 추적</h1>
+    <p class="page-subtitle">플랫폼 링크가 하나도 수집되지 않은 앨범 목록</p>
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title">수집 실패 앨범</h2>
+        <div id="total-count" style="color: #6c757d; font-size: 14px;">-</div>
+    </div>
+
+    <div id="failures-table">
+        <div style="text-align: center; padding: 60px 20px; color: #6c757d;">로딩 중...</div>
+    </div>
+
+    <div id="pagination" style="display: flex; justify-content: center; gap: 10px; padding: 20px; border-top: 1px solid #e9ecef;"></div>
+</div>
+
+<style>
+    .failures-table-header {
+        display: grid;
+        grid-template-columns: 80px 1fr 250px 150px 120px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .failures-table-row {
+        display: grid;
+        grid-template-columns: 80px 1fr 250px 150px 120px;
+        padding: 15px 20px;
+        align-items: center;
+        border-bottom: 1px solid #f1f3f5;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .failures-table-row:hover {
+        background: #f8f9fa;
+    }
+
+    .album-cover-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #e9ecef;
+    }
+
+    .retry-btn {
+        padding: 6px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .retry-btn:hover {
+        background: #0056b3;
+    }
+</style>
+
+<script>
+    let currentPage = 1;
+
+    async function loadFailures(page = 1) {
+        currentPage = page;
+
+        try {
+            const params = new URLSearchParams({
+                page: page,
+                limit: 50
+            });
+
+            const response = await fetch(`/admin/api/failures?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                renderFailuresTable(data.failures);
+                renderPagination(data);
+                document.getElementById('total-count').textContent = `총 ${data.total.toLocaleString()}개 실패`;
+            }
+        } catch (error) {
+            console.error('실패 목록 로드 실패:', error);
+        }
+    }
+
+    function renderFailuresTable(failures) {
+        const container = document.getElementById('failures-table');
+
+        if (!failures || failures.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #28a745;">✅ 모든 앨범이 수집되었습니다!</div>';
+            return;
+        }
+
+        const headerHtml = `
+            <div class="failures-table-header">
+                <div>커버</div>
+                <div>앨범</div>
+                <div>아티스트</div>
+                <div>발매일</div>
+                <div>작업</div>
+            </div>
+        `;
+
+        const rowsHtml = failures.map(failure => {
+            const coverHtml = failure.album_cover_url ?
+                `<img src="${failure.album_cover_url}" class="album-cover-small" onerror="this.style.display='none'">` :
+                '<div class="album-cover-small"></div>';
+
+            const releaseDate = failure.release_date ? failure.release_date.substring(0, 10) : '미정';
+            const albumId = encodeURIComponent(failure.artist_ko + '|||' + failure.album_ko);
+
+            return `
+                <div class="failures-table-row" onclick="location.href='/admin/albums/${albumId}'">
+                    <div>${coverHtml}</div>
+                    <div style="font-weight: 600;">${failure.album_ko}</div>
+                    <div style="color: #6c757d;">${failure.artist_ko}</div>
+                    <div style="color: #6c757d; font-size: 14px;">${releaseDate}</div>
+                    <div>
+                        <button class="retry-btn" onclick="event.stopPropagation(); location.href='/admin/albums/${albumId}'">
+                            수정
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = headerHtml + rowsHtml;
+    }
+
+    function renderPagination(data) {
+        const container = document.getElementById('pagination');
+        const totalPages = Math.ceil(data.total / data.limit);
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        html += `<button class="pagination-btn" onclick="loadFailures(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+            ← 이전
+        </button>`;
+
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="loadFailures(${i})">
+                ${i}
+            </button>`;
+        }
+
+        html += `<button class="pagination-btn" onclick="loadFailures(${currentPage + 1})" ${!data.has_more ? 'disabled' : ''}>
+            다음 →
+        </button>`;
+
+        container.innerHTML = html;
+    }
+
+    loadFailures();
+</script>
+{% endblock %}

@@ -98,6 +98,12 @@ body {
   gap: var(--spacing-lg);
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
 .logo {
   font-size: 24px;
   font-weight: 700;
@@ -141,13 +147,18 @@ body {
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-tertiary);
-  pointer-events: none;
+  cursor: pointer;
+  transition: color var(--transition-base);
+}
+
+.search-icon:hover {
+  color: var(--primary);
 }
 
 .report-button {
-  padding: 10px 20px;
-  background: var(--primary);
-  color: white;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text-secondary);
   border: none;
   border-radius: var(--radius-md);
   font-size: 14px;
@@ -161,9 +172,8 @@ body {
 }
 
 .report-button:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  color: var(--primary);
+  background: var(--bg-secondary);
 }
 
 
@@ -263,7 +273,6 @@ body {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
 }
 
 .carousel-track {
@@ -975,10 +984,20 @@ body {
     flex-wrap: wrap;
   }
 
-  .search-container {
+  .header-right {
     order: 3;
     flex: 1 0 100%;
+    flex-direction: column-reverse;
+    gap: var(--spacing-sm);
+  }
+
+  .search-container {
+    width: 100%;
     max-width: 100%;
+  }
+
+  .report-button {
+    align-self: flex-start;
   }
 
   .hero-title {
@@ -992,5 +1011,462 @@ body {
 
   .section {
     padding: 0 var(--spacing-md);
+  }
+}
+
+/* ========================================
+   앨범 상세 페이지
+   ======================================== */
+
+.album-detail-page {
+  background: var(--bg-secondary);
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+.album-header {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+
+.album-cover-large {
+  width: 240px;
+  height: 240px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  box-shadow: var(--shadow-lg);
+  flex-shrink: 0;
+}
+
+.album-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.album-title-large {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.artist-name-large {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.release-date {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.release-date::before {
+  content: "📅";
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.share-button {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.share-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.share-button:active {
+  transform: translateY(0);
+}
+
+.copy-notification {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: var(--success);
+  color: white;
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.copy-notification::before {
+  content: "✓";
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.copy-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.platforms-section {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.section-title::before {
+  content: "🎵";
+}
+
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.platform-card {
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all var(--transition-base);
+  background: var(--bg-secondary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.platform-card.found {
+  background: var(--bg-secondary);
+  cursor: pointer;
+}
+
+.platform-card.found:hover {
+  background: var(--bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.platform-card.found:hover .play-button {
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.platform-card.not-found {
+  background: var(--bg-secondary);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.platform-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.platform-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+
+.platform-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.play-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  padding-left: 3px;
+}
+
+.platform-link {
+  text-decoration: none;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition-base);
+}
+
+.platform-link:hover {
+  color: var(--primary-hover);
+  gap: var(--spacing-sm);
+}
+
+.not-found-text {
+  color: var(--text-tertiary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 공유 모달 */
+.share-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+.share-modal-overlay.active {
+  display: flex;
+}
+
+.share-modal-content {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.share-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.share-modal-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.share-modal-close {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all var(--transition-base);
+}
+
+.share-modal-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.share-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.share-option-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.share-link-container {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.share-url-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.share-url-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.copy-link-btn {
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.copy-link-btn:hover {
+  background: var(--primary-hover);
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  min-height: 200px;
+}
+
+.qr-code-image {
+  max-width: 200px;
+  height: auto;
+}
+
+.qr-loading, .qr-error {
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .album-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-lg);
+  }
+
+  .album-cover-large {
+    width: 180px;
+    height: 180px;
+  }
+
+  .album-title-large {
+    font-size: 28px;
+  }
+
+  .artist-name-large {
+    font-size: 18px;
+  }
+
+  .action-buttons {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .share-button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .platforms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platforms-section {
+    padding: var(--spacing-lg);
+  }
+
+  .copy-notification {
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .share-modal-content {
+    padding: var(--spacing-lg);
+  }
+
+  .share-link-container {
+    flex-direction: column;
+  }
+
+  .copy-link-btn {
+    width: 100%;
   }
 }
