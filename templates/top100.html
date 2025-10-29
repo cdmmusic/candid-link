@@ -13,29 +13,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
 </head>
 <body>
-    <!-- 헤더 -->
-    <header class="header">
-        <div class="header-content">
-            <a href="/" class="logo">
-                <span class="logo-icon">🔗</span>
-                <span>캔디드뮤직</span>
-            </a>
-
-            <div class="search-container">
-                <input
-                    type="text"
-                    id="search-input"
-                    class="search-input"
-                    placeholder="아티스트, 앨범 검색..."
-                    autocomplete="off">
-                <span class="search-icon">🔍</span>
-            </div>
-
-            <a href="https://pf.kakao.com/_azxkPn" target="_blank" class="report-button">
-                오류제보
-            </a>
-        </div>
-    </header>
+    {% include 'header.html' %}
 
     <!-- 페이지 헤더 -->
     <section class="page-header-section">

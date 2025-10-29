@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="캔디드뮤직 링크 - 앨범 검색">
+    <title>검색 - 캔디드뮤직 링크</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <!-- 페이지 헤더 -->
+    <section class="page-header-section">
+        <div class="container">
+            <a href="/" class="back-link">← 홈으로</a>
+            <div class="page-header-content">
+                <h1 class="page-title">
+                    <span>🔍</span>
+                    검색 결과
+                </h1>
+                <p class="page-description" id="search-query"></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 검색 결과 -->
+    <section class="section">
+        <div class="container">
+            <div class="album-grid" id="album-grid">
+                <div class="loading">검색 중...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>캔디드뮤직 링크</h3>
+                <p>17개 음악 플랫폼의 링크를 한 곳에서</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>서비스</h3>
+                <ul class="footer-links">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/top100">TOP 100</a></li>
+                    <li><a href="/latest">최신 발매</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원</h3>
+                <ul class="footer-links">
+                    <li><a href="#contact">문의하기</a></li>
+                    <li><a href="#terms">이용약관</a></li>
+                    <li><a href="#privacy">개인정보처리방침</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>지원 플랫폼</h3>
+                <ul class="footer-links">
+                    <li>국내: Melon, Genie, Bugs, FLO, VIBE</li>
+                    <li>글로벌: Spotify, Apple Music, YouTube 외 9개</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Candid Music Entertainment. All rights reserved.</p>
+            <p>Made with ❤️ in Seoul</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // URL에서 검색어 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+
+        // 검색창에 검색어 표시
+        document.getElementById('search-input').value = query;
+        document.getElementById('search-query').textContent = query ? `"${query}" 검색 결과` : '검색어를 입력하세요';
+
+        // 검색 기능
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const newQuery = e.target.value.trim();
+                if (newQuery) {
+                    window.location.href = `/search?q=${encodeURIComponent(newQuery)}`;
+                }
+            }
+        });
+
+        // 스켈레톤 UI 생성
+        function createSkeletonCards(count = 20) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="skeleton-album-card">
+                        <div class="skeleton skeleton-album-cover"></div>
+                        <div class="skeleton-album-info">
+                            <div class="skeleton skeleton-album-title"></div>
+                            <div class="skeleton skeleton-album-artist"></div>
+                            <div class="skeleton skeleton-album-date"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        // 검색 수행
+        async function performSearch(query) {
+            const albumGrid = document.getElementById('album-grid');
+
+            if (!query) {
+                albumGrid.innerHTML = '<div class="no-data">검색어를 입력하세요</div>';
+                return;
+            }
+
+            albumGrid.innerHTML = createSkeletonCards(20);
+
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to search');
+                }
+
+                if (data.albums.length === 0) {
+                    albumGrid.innerHTML = '<div class="no-data">검색 결과가 없습니다</div>';
+                    return;
+                }
+
+                // 앨범 카드 생성
+                albumGrid.innerHTML = '';
+                data.albums.forEach(album => {
+                    const albumId = encodeURIComponent(album.artist_ko + '|||' + album.album_ko);
+                    const releaseDate = (album.release_date && album.release_date.trim() !== '') ?
+                        album.release_date.substring(0, 10) : '미정';
+
+                    const card = document.createElement('a');
+                    card.href = `/album/${albumId}`;
+                    card.className = 'album-card';
+                    card.innerHTML = `
+                        <div class="album-thumbnail-container">
+                            ${album.album_cover_url ?
+                                `<img src="${album.album_cover_url}" alt="${album.album_ko}" class="album-thumbnail" onerror="this.style.display='none'">` :
+                                '<div class="album-thumbnail" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>'}
+                        </div>
+                        <div class="album-info">
+                            <div class="album-title">${album.album_ko}</div>
+                            <div class="album-artist">${album.artist_ko}</div>
+                            <div class="album-meta">
+                                <span class="album-date">${releaseDate}</span>
+                            </div>
+                        </div>
+                    `;
+                    albumGrid.appendChild(card);
+                });
+
+            } catch (error) {
+                albumGrid.innerHTML = `<div class="error-message">⚠️ ${error.message}</div>`;
+            }
+        }
+
+        // 초기 검색 실행
+        if (query) {
+            performSearch(query);
+        } else {
+            document.getElementById('album-grid').innerHTML = '<div class="no-data">검색어를 입력하세요</div>';
+        }
+    </script>
+
+    <style>
+        .section .container {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .page-header-section {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 80px 20px 40px;
+            color: white;
+            margin-top: 0;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .page-header-content {
+            margin-top: 0;
+        }
+
+        .page-title {
+            font-size: 42px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0 0 16px 0;
+        }
+
+        .page-description {
+            font-size: 18px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .loading, .no-data, .error-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+
+            .page-description {
+                font-size: 16px;
+            }
+        }
+    </style>
+</body>
+</html>

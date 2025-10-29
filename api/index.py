@@ -4,49 +4,33 @@ Vercel Serverless Function - 음악 플랫폼 링크 API
 Turso (libSQL) 데이터베이스 사용
 """
 
-from flask import Flask, request, jsonify, render_template_string, render_template
+from flask import Flask, request, jsonify, render_template_string, render_template, redirect
 import os
 import json
 from datetime import datetime
+import qrcode
+from io import BytesIO
+import base64
+import string
+import random
 
-# Turso libsql 클라이언트 import
-try:
-    import libsql_experimental as libsql
-    USE_TURSO = True
-except ImportError:
-    USE_TURSO = False
-    print("Error: libsql_experimental required for Vercel deployment")
+# SQLite import
+import sqlite3
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
-# 환경 변수에서 Turso 설정 가져오기
-TURSO_DATABASE_URL = os.environ.get('TURSO_DATABASE_URL', '')
-TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN', '')
-
-# 로컬 개발용 SQLite 경로
-LOCAL_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'album_links.db')
+# 로컬 SQLite 경로
+LOCAL_DB_PATH = '/Users/choejibin/release-album-link/album_links.db'
 
 def get_db_connection():
-    """데이터베이스 연결 (Turso)"""
-    if not USE_TURSO:
-        raise Exception("libsql_experimental is required for Vercel deployment")
-    if not TURSO_DATABASE_URL or not TURSO_AUTH_TOKEN:
-        raise Exception("Turso credentials not found in environment variables")
-
-    # Turso 연결
-    conn = libsql.connect(
-        database=TURSO_DATABASE_URL,
-        auth_token=TURSO_AUTH_TOKEN
-    )
+    """데이터베이스 연결 (로컬 SQLite)"""
+    conn = sqlite3.connect(LOCAL_DB_PATH)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def dict_from_row(row, cursor=None):
     """Row 객체를 딕셔너리로 변환"""
-    if USE_TURSO and cursor:
-        # Turso: cursor.description을 사용하여 컬럼명 매핑
-        columns = [desc[0] for desc in cursor.description]
-        return dict(zip(columns, row))
-    elif hasattr(row, 'keys'):
+    if hasattr(row, 'keys'):
         # SQLite Row 객체
         return dict(row)
     else:
@@ -55,8 +39,8 @@ def dict_from_row(row, cursor=None):
 
 @app.route('/', methods=['GET'])
 def index():
-    """웹 UI - 메인 페이지 (home_v2.html 사용)"""
-    return render_template('home_v2.html')
+    """웹 UI - 메인 페이지"""
+    return render_template('home.html')
 
 @app.route('/top100', methods=['GET'])
 def top100_page():
@@ -84,13 +68,8 @@ def get_albums_with_links():
             SELECT COUNT(DISTINCT artist_ko || '|||' || album_ko) as total
             FROM album_platform_links
         ''')
-        # fetchone 전에 컬럼 정보 저장
-        total_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
         total_row = cursor.fetchone()
-        if USE_TURSO and total_columns:
-            total_dict = dict(zip(total_columns, total_row))
-        else:
-            total_dict = dict(total_row)
+        total_dict = dict(total_row)
         total_count = total_dict['total']
 
         # 앨범 목록 조회 (페이지네이션)
@@ -120,13 +99,8 @@ def get_albums_with_links():
         ''', (limit, offset))
 
         albums_data = []
-        # fetchall 전에 컬럼 정보 저장
-        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
         for row in cursor.fetchall():
-            if USE_TURSO and albums_columns:
-                row_dict = dict(zip(albums_columns, row))
-            else:
-                row_dict = dict(row)
+            row_dict = dict(row)
 
             albums_data.append({
                 'artist_ko': row_dict['artist_ko'],
@@ -174,19 +148,23 @@ def album_detail(album_id):
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT DISTINCT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
+            SELECT artist_ko, artist_en, album_ko, album_en, album_cover_url, release_date
             FROM album_platform_links
             WHERE artist_ko = ? AND album_ko = ?
+            ORDER BY
+                CASE WHEN album_cover_url IS NOT NULL AND album_cover_url <> '' THEN 0 ELSE 1 END,
+                created_at DESC
+            LIMIT 1
         ''', (artist_ko, album_ko))
 
         # 앨범 정보 가져오기
-        album_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        album_columns = None
         album_row = cursor.fetchone()
 
         if not album_row:
             return "앨범을 찾을 수 없습니다.", 404
 
-        if USE_TURSO and album_columns:
+        if False:
             album_dict = dict(zip(album_columns, album_row))
         else:
             album_dict = dict(album_row)
@@ -200,10 +178,10 @@ def album_detail(album_id):
             ORDER BY platform_type, platform_name
         ''', (artist_ko, album_ko))
 
-        platforms_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        platforms_columns = None
         platforms = []
         for p in cursor.fetchall():
-            if USE_TURSO and platforms_columns:
+            if False:
                 p_dict = dict(zip(platforms_columns, p))
             else:
                 p_dict = dict(p)
@@ -270,195 +248,60 @@ def album_detail(album_id):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{album_dict['album_ko']} - {album_dict['artist_ko']}</title>
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-            background: #f8f9fa;
-            color: #212529;
-        }}
-
-        .header {{
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 16px 20px;
-        }}
-
-        .header-content {{
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }}
-
-        .back-button {{
-            font-size: 24px;
-            text-decoration: none;
-            color: #6c757d;
-        }}
-
-        .logo {{
-            font-size: 24px;
-            font-weight: 700;
-            color: #007bff;
-            text-decoration: none;
-        }}
-
-        .container {{
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }}
-
-        .album-header {{
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }}
-
-        .album-cover-large {{
-            width: 200px;
-            height: 200px;
-            border-radius: 12px;
-            object-fit: cover;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }}
-
-        .album-info {{
-            flex: 1;
-        }}
-
-        .album-title-large {{
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }}
-
-        .artist-name-large {{
-            font-size: 20px;
-            color: #6c757d;
-            margin-bottom: 15px;
-        }}
-
-        .release-date {{
-            font-size: 16px;
-            color: #868e96;
-        }}
-
-        .platforms-section {{
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }}
-
-        .section-title {{
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }}
-
-        .platforms-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-        }}
-
-        .platform-card {{
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }}
-
-        .platform-card.found {{
-            background: #f8f9fa;
-        }}
-
-        .platform-card.found:hover {{
-            background: #e9ecef;
-            transform: translateY(-2px);
-        }}
-
-        .platform-card.not-found {{
-            background: #fff;
-            opacity: 0.5;
-        }}
-
-        .platform-name {{
-            font-size: 15px;
-            font-weight: 600;
-        }}
-
-        .platform-link {{
-            text-decoration: none;
-            color: #007bff;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }}
-
-        .platform-link:hover {{
-            text-decoration: underline;
-        }}
-
-        .not-found-text {{
-            color: #adb5bd;
-            font-size: 14px;
-        }}
-
-        @media (max-width: 768px) {{
-            .album-header {{
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }}
-
-            .album-cover-large {{
-                width: 150px;
-                height: 150px;
-            }}
-
-            .album-title-large {{
-                font-size: 24px;
-            }}
-
-            .artist-name-large {{
-                font-size: 18px;
-            }}
-
-            .platforms-grid {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-    </style>
+    <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-    <div class="header">
+    <header class="header">
         <div class="header-content">
-            <a href="/" class="back-button">←</a>
-            <a href="/" class="logo">🔗 캔디드뮤직 링크</a>
+            <a href="/" class="logo">
+                <span class="logo-icon">🔗</span>
+                <span>캔디드뮤직</span>
+            </a>
+
+            <div class="header-right">
+                <a href="https://pf.kakao.com/_azxkPn" target="_blank" class="report-button">
+                    오류제보
+                </a>
+
+                <div class="search-container">
+                    <input
+                        type="text"
+                        id="search-input"
+                        class="search-input"
+                        placeholder="아티스트, 앨범 검색..."
+                        autocomplete="off">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
         </div>
-    </div>
+    </header>
+    <script src="/static/js/main.js"></script>
 
     <div class="container">
-        <div class="album-header">
-            {'<img src="' + album_dict['album_cover_url'] + '" alt="앨범 커버" class="album-cover-large">' if album_dict.get('album_cover_url') else '<div class="album-cover-large" style="background:#e9ecef;"></div>'}
+        <div class="album-header">"""
+
+        # 앨범 커버 이미지 추가
+        cover_url = album_dict.get('album_cover_url') or ''
+        cover_url = cover_url.strip() if cover_url else ''
+        if cover_url:
+            html += f"""
+            <img src="{cover_url}" alt="앨범 커버" class="album-cover-large">"""
+        else:
+            html += """
+            <div class="album-cover-large" style="background:#e9ecef;"></div>"""
+
+        html += f"""
             <div class="album-info">
                 <h1 class="album-title-large">{album_dict['album_ko']}</h1>
                 <div class="artist-name-large">{album_dict['artist_ko']}</div>
-                <div class="release-date">발매일: {album_dict['release_date'][:10] if album_dict.get('release_date') else '미정'}</div>
+                <div class="release-date">{album_dict['release_date'][:10] if album_dict.get('release_date') else '미정'}</div>
+
+                <div class="action-buttons">
+                    <button class="share-button" onclick="openShareModal()">
+                        <span>📤</span>
+                        <span>공유하기</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -467,30 +310,182 @@ def album_detail(album_id):
             <div class="platforms-grid">
 """
 
-        # 플랫폼 카드 생성
-        for platform in platforms:
-            found = platform['found']
-            card_class = 'found' if found else 'not-found'
+        # 플랫폼 카드 생성 (미등록 플랫폼 제외)
+        for platform in platforms_data:
+            if platform['found']:
+                logo = platform.get('platform_logo') or ''
+                logo = logo.strip() if logo else ''
 
-            if found:
+                # 로고가 있는 경우에만 이미지 표시
+                if logo:
+                    logo_html = f'<img src="{logo}" alt="{platform["platform_name"]}" class="platform-logo" onerror="this.style.display=\'none\'">'
+                else:
+                    logo_html = ''
+
                 html += f"""
-                <a href="{platform['platform_url']}" target="_blank" class="platform-card {card_class}" style="text-decoration: none; color: inherit;">
-                    <div class="platform-name">{platform['platform_name']}</div>
-                    <div class="platform-link">열기 →</div>
+                <a href="{platform['platform_url']}" target="_blank" class="platform-card found">
+                    <div class="platform-info">
+                        {logo_html}
+                        <span class="platform-name">{platform['platform_name']}</span>
+                    </div>
+                    <button class="play-button">▶</button>
                 </a>
 """
-            else:
-                html += f"""
-                <div class="platform-card {card_class}">
-                    <div class="platform-name">{platform['platform_name']}</div>
-                    <div class="not-found-text">미등록</div>
-                </div>
-"""
 
-        html += """
+        html += f"""
             </div>
         </div>
     </div>
+
+    <!-- 공유 모달 -->
+    <div class="share-modal-overlay" id="share-modal" onclick="closeShareModal(event)">
+        <div class="share-modal-content" onclick="event.stopPropagation()">
+            <div class="share-modal-header">
+                <h3>앨범 공유하기</h3>
+                <button class="share-modal-close" onclick="closeShareModal()">&times;</button>
+            </div>
+            <div class="share-modal-body">
+                <div class="share-option">
+                    <div class="share-option-title">짧은 URL</div>
+                    <div id="short-url-loading" class="qr-loading">
+                        링크 생성 중...
+                    </div>
+                    <div id="short-url-content" class="share-link-container" style="display: none;">
+                        <input type="text" id="short-url-input" class="share-url-input" readonly value="">
+                        <button class="copy-link-btn" onclick="copyShortUrl()">복사</button>
+                    </div>
+                </div>
+                <div class="share-option">
+                    <div class="share-option-title">QR 코드</div>
+                    <div class="qr-code-container" id="qr-container">
+                        <div class="qr-loading">QR 코드 생성 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 복사 알림 -->
+    <div id="copy-notification" class="copy-notification">링크가 복사되었습니다!</div>
+
+    <script>
+        const ARTIST_KO = '{album_dict['artist_ko']}';
+        const ALBUM_KO = '{album_dict['album_ko']}';
+
+        // 공유 모달 열기
+        function openShareModal() {{
+            const modal = document.getElementById('share-modal');
+            const currentUrl = window.location.href;
+
+            modal.classList.add('active');
+
+            // 짧은 URL 생성
+            generateShortUrl(currentUrl);
+
+            // QR 코드 생성 (짧은 URL 사용)
+            generateQRCode(currentUrl);
+        }}
+
+        // 공유 모달 닫기
+        function closeShareModal(event) {{
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('share-modal');
+            modal.classList.remove('active');
+        }}
+
+        // 짧은 URL 생성
+        async function generateShortUrl(url) {{
+            const loadingEl = document.getElementById('short-url-loading');
+            const contentEl = document.getElementById('short-url-content');
+            const inputEl = document.getElementById('short-url-input');
+
+            try {{
+                const response = await fetch('/api/generate-short-url', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        artist_ko: ARTIST_KO,
+                        album_ko: ALBUM_KO,
+                        original_url: url
+                    }})
+                }});
+
+                const data = await response.json();
+
+                if (data.success) {{
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'flex';
+                    inputEl.value = data.short_url;
+                }} else {{
+                    loadingEl.textContent = '링크 생성 실패';
+                }}
+            }} catch (error) {{
+                loadingEl.textContent = '링크 생성 실패';
+            }}
+        }}
+
+        // 짧은 URL 복사
+        function copyShortUrl() {{
+            const inputEl = document.getElementById('short-url-input');
+            const notification = document.getElementById('copy-notification');
+
+            inputEl.select();
+            navigator.clipboard.writeText(inputEl.value).then(() => {{
+                notification.classList.add('show');
+                setTimeout(() => {{
+                    notification.classList.remove('show');
+                }}, 2000);
+            }}).catch(() => {{
+                document.execCommand('copy');
+                notification.classList.add('show');
+                setTimeout(() => {{
+                    notification.classList.remove('show');
+                }}, 2000);
+            }});
+        }}
+
+        // 링크 복사
+        function copyShareLink() {{
+            const shareUrl = document.getElementById('share-url');
+            const notification = document.getElementById('copy-notification');
+
+            shareUrl.select();
+            navigator.clipboard.writeText(shareUrl.value).then(() => {{
+                notification.classList.add('show');
+                setTimeout(() => {{
+                    notification.classList.remove('show');
+                }}, 2000);
+            }}).catch(() => {{
+                document.execCommand('copy');
+                notification.classList.add('show');
+                setTimeout(() => {{
+                    notification.classList.remove('show');
+                }}, 2000);
+            }});
+        }}
+
+        // QR 코드 생성
+        async function generateQRCode(url) {{
+            const container = document.getElementById('qr-container');
+            try {{
+                const response = await fetch('/api/generate-qr', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ url: url }})
+                }});
+
+                const data = await response.json();
+
+                if (data.success) {{
+                    container.innerHTML = `<img src="${{data.qr_code}}" alt="QR Code" class="qr-code-image">`;
+                }} else {{
+                    container.innerHTML = '<div class="qr-error">QR 생성 실패</div>';
+                }}
+            }} catch (error) {{
+                container.innerHTML = '<div class="qr-error">QR 생성 실패</div>';
+            }}
+        }}
+    </script>
 </body>
 </html>
 """
@@ -795,10 +790,10 @@ def api_search():
             LIMIT 200
         ''', (search_pattern, search_pattern, search_pattern, search_pattern))
 
-        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        albums_columns = None
         albums = []
         for row in cursor.fetchall():
-            if USE_TURSO and albums_columns:
+            if False:
                 row_dict = dict(zip(albums_columns, row))
             else:
                 row_dict = dict(row)
@@ -983,11 +978,11 @@ def api_top100():
             LIMIT ? OFFSET ?
         ''', (limit, offset))
 
-        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        albums_columns = None
         albums = []
         rank = offset + 1
         for row in cursor.fetchall():
-            if USE_TURSO and albums_columns:
+            if False:
                 row_dict = dict(zip(albums_columns, row))
             else:
                 row_dict = dict(row)
@@ -1037,9 +1032,9 @@ def api_latest():
             WHERE (release_date IS NULL OR release_date = '' OR datetime(release_date) <= datetime('now', 'localtime'))
         ''')
 
-        total_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        total_columns = None
         total_row = cursor.fetchone()
-        if USE_TURSO and total_columns:
+        if False:
             total_dict = dict(zip(total_columns, total_row))
         else:
             total_dict = dict(total_row)
@@ -1070,10 +1065,10 @@ def api_latest():
             LIMIT ? OFFSET ?
         ''', (limit, offset))
 
-        albums_columns = [desc[0] for desc in cursor.description] if USE_TURSO else None
+        albums_columns = None
         albums = []
         for row in cursor.fetchall():
-            if USE_TURSO and albums_columns:
+            if False:
                 row_dict = dict(zip(albums_columns, row))
             else:
                 row_dict = dict(row)
@@ -1102,10 +1097,151 @@ def api_latest():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ==================== 공유 기능 API ====================
+
+def generate_short_code(length=6):
+    """짧은 URL 코드 생성"""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+@app.route('/api/create-short-link', methods=['POST'])
+def create_short_link():
+    """Short URL 생성"""
+    try:
+        data = request.get_json()
+        artist_ko = data.get('artist_ko')
+        album_ko = data.get('album_ko')
+
+        if not artist_ko or not album_ko:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 기존 short link 확인
+        cursor.execute('''
+            SELECT short_code FROM short_links
+            WHERE artist_ko = ? AND album_ko = ?
+        ''', (artist_ko, album_ko))
+
+        result = cursor.fetchone()
+
+        if result:
+            # 이미 존재하면 기존 코드 반환
+            short_code = result[0] if isinstance(result, tuple) else result['short_code']
+        else:
+            # 새 코드 생성
+            while True:
+                short_code = generate_short_code()
+                cursor.execute('SELECT 1 FROM short_links WHERE short_code = ?', (short_code,))
+                if not cursor.fetchone():
+                    break
+
+            # DB에 저장
+            cursor.execute('''
+                INSERT INTO short_links (short_code, artist_ko, album_ko)
+                VALUES (?, ?, ?)
+            ''', (short_code, artist_ko, album_ko))
+            conn.commit()
+
+        conn.close()
+
+        # 짧은 URL 생성
+        short_url = f"{request.host_url}s/{short_code}"
+
+        return jsonify({
+            'success': True,
+            'short_code': short_code,
+            'short_url': short_url
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/s/<short_code>')
+def short_link_redirect(short_code):
+    """Short URL 리다이렉트"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Short code로 앨범 정보 조회
+        cursor.execute('''
+            SELECT artist_ko, album_ko FROM short_links
+            WHERE short_code = ?
+        ''', (short_code,))
+
+        result = cursor.fetchone()
+
+        if not result:
+            conn.close()
+            return "링크를 찾을 수 없습니다", 404
+
+        artist_ko = result[0] if isinstance(result, tuple) else result['artist_ko']
+        album_ko = result[1] if isinstance(result, tuple) else result['album_ko']
+
+        # 클릭 수 증가
+        cursor.execute('''
+            UPDATE short_links
+            SET click_count = click_count + 1,
+                last_clicked_at = CURRENT_TIMESTAMP
+            WHERE short_code = ?
+        ''', (short_code,))
+        conn.commit()
+        conn.close()
+
+        # 원본 URL로 리다이렉트
+        album_id = f"{artist_ko}|||{album_ko}"
+        return redirect(f"/album/{album_id}")
+
+    except Exception as e:
+        return f"오류: {str(e)}", 500
+
+@app.route('/api/generate-qr', methods=['POST'])
+def generate_qr_code():
+    """QR 코드 생성"""
+    try:
+        data = request.get_json()
+        url = data.get('url')
+
+        if not url:
+            return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        # QR 코드 생성
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+
+        # 이미지 생성
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # BytesIO로 변환
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        # Base64 인코딩
+        img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return jsonify({
+            'success': True,
+            'qr_code': f"data:image/png;base64,{img_base64}"
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== Health Check ====================
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check"""
-    db_type = 'turso' if (USE_TURSO and TURSO_DATABASE_URL) else 'sqlite'
+    db_type = 'sqlite'
     return jsonify({
         'status': 'ok',
         'service': 'album-links-api',
