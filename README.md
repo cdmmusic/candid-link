@@ -1,406 +1,186 @@
-# 🎵 캔디드뮤직 링크
+# Release Album Link Collection System
 
-17개 음악 스트리밍 플랫폼의 앨범 링크를 한 곳에서 제공하는 웹 서비스입니다.
+Companion.global 스마트 링크 자동 수집 시스템
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
+## 프로젝트 개요
 
----
+이 시스템은 앨범 메타데이터(CDMA 코드, 아티스트, 앨범명)를 사용하여 Companion.global에서 자동으로 글로벌 및 한국 음악 플랫폼 링크를 수집합니다.
 
-## ✨ 주요 기능
+## 주요 기능
 
-- **17개 플랫폼 지원**: Melon, Spotify, Apple Music, YouTube Music 등
-- **통합 검색**: 아티스트/앨범명으로 빠른 검색
-- **반응형 디자인**: 모바일/데스크톱 최적화
-- **앨범 상세**: 모든 플랫폼 링크를 한 눈에
-- **공유 기능**: 짧은 URL + QR 코드 생성
-- **TOP 100**: 주간/일간/연간 인기 차트
-- **최신 발매**: 최신 앨범 탐색
+- **CDMA 코드 기반 검색**: 정확한 앨범 식별을 위해 CDMA 코드로 검색
+- **자동 로그인**: Companion.global에 자동 로그인
+- **글로벌 플랫폼 링크 수집**: Spotify, Apple Music, Deezer, Anghami 등 12~13개 플랫폼
+- **한국 플랫폼 링크 수집**: 멜론, 지니, VIBE, FLO 등 3~4개 플랫폼
+- **SQLite 데이터베이스**: 수집된 링크를 `album_links.db`에 저장
 
----
-
-## 📊 지원 플랫폼 (17개)
-
-### 🇰🇷 국내 (5개)
-- **Melon** | **Genie** | **Bugs** | **FLO** | **VIBE**
-
-### 🌍 글로벌 (12개)
-- **Apple Music** | **Spotify** | **YouTube** | **Amazon Music**
-- **Deezer** | **Tidal** | **KKBox** | **Anghami**
-- **Pandora** | **LINE Music** | **AWA** | **Moov** | **QQ MUSIC**
-
----
-
-## 🚀 빠른 시작 (처음 세팅)
-
-### 필수 요구사항
-
-#### 공통
-- **Python 3.10 이상**
-- **SQLite3** (Python 설치 시 포함)
-- **Git**
-
-#### 추가 (데이터 수집용)
-- **Docker** (Selenium Grid 실행용)
-
-### 1️⃣ 저장소 클론
-
-```bash
-git clone https://github.com/yourusername/release-album-link.git
-cd release-album-link
-```
-
-### 2️⃣ Python 환경 설정
-
-<details>
-<summary><b>🍎 macOS</b></summary>
-
-```bash
-# Homebrew로 Python 설치 (선택사항)
-brew install python@3.10
-
-# 가상환경 생성 (권장)
-python3 -m venv venv
-source venv/bin/activate
-
-# 의존성 설치
-pip install -r requirements.txt
-```
-
-**macOS 전용 주의사항:**
-- M1/M2 Mac의 경우 Selenium Grid는 `seleniarm/standalone-chromium` 이미지 사용
-- Docker Desktop for Mac 필요 (데이터 수집 시)
-</details>
-
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-```powershell
-# Python 설치 확인
-python --version
-
-# 가상환경 생성 (권장)
-python -m venv venv
-venv\Scripts\activate
-
-# 의존성 설치
-pip install -r requirements.txt
-```
-
-**Windows 전용 주의사항:**
-- PowerShell 또는 CMD 사용
-- 경로 구분자: `\` 사용 (예: `venv\Scripts\activate`)
-- Docker Desktop for Windows 필요 (데이터 수집 시)
-- WSL2 백엔드 권장
-</details>
-
-### 3️⃣ 로컬 서버 실행
-
-```bash
-# Flask 웹 서버 시작
-python3 api/index.py
-```
-
-브라우저에서 접속: **http://localhost:5002**
-
----
-
-## 🗂️ 프로젝트 구조
+## 시스템 구조
 
 ```
 release-album-link/
 ├── api/
-│   └── index.py                    # Flask 웹 서버 (메인)
-├── templates/                      # HTML 템플릿
-│   ├── header.html                 # 공통 헤더
-│   ├── home.html                   # 홈 페이지
-│   ├── search.html                 # 검색 페이지
-│   ├── top100.html                 # TOP 100 페이지
-│   └── latest.html                 # 최신 발매 페이지
-├── static/
-│   ├── css/main.css                # 메인 스타일시트
-│   └── js/
-│       ├── main.js                 # 공통 JavaScript
-│       └── carousel.js             # 캐러셀 기능
-├── collect_global_resume.py        # 글로벌 + 국내 링크 수집 (추천)
-├── companion_api.py                # Companion API (글로벌 수집용)
-├── album_links.db                  # SQLite 데이터베이스
-├── collection.log                  # 수집 로그
-└── README.md                       # 이 파일
+│   ├── companion_api.py      # Companion.global API (포트 5001)
+│   ├── admin_api.py           # 관리자 API
+│   ├── db_api.py              # 데이터베이스 API
+│   ├── index.py               # 메인 API 라우터
+│   └── web_server.py          # 웹 서버
+├── collect_links.py           # 메인 수집 스크립트
+├── album_links.db             # SQLite 데이터베이스
+├── logs/                      # 로그 파일
+├── archived/                  # 구버전/임시 파일 보관
+│   └── old_scripts/
+└── README.md                  # 이 문서
 ```
 
----
+## 설치 및 요구사항
 
-## 🔄 데이터 수집 (선택사항)
+### 필수 패키지
+```bash
+pip install flask selenium requests beautifulsoup4
+```
 
-데이터 수집은 선택사항입니다. 기본 데이터베이스(`album_links.db`)가 이미 포함되어 있습니다.
-
-### 수집 환경 설정
-
-#### 1. Docker 설치
-
-<details>
-<summary><b>🍎 macOS</b></summary>
+### Selenium Grid
+Selenium Grid (Chrome/Firefox)가 `http://localhost:4444`에서 실행 중이어야 합니다.
 
 ```bash
-# Homebrew로 Docker 설치
-brew install --cask docker
-
-# Docker Desktop 실행
-open -a Docker
-
-# Selenium Grid 시작 (M1/M2 Mac)
-docker run -d --name selenium-standalone \
-  -p 4444:4444 --shm-size=2g \
-  seleniarm/standalone-chromium:latest
-```
-</details>
-
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-1. Docker Desktop for Windows 다운로드: https://www.docker.com/products/docker-desktop
-2. WSL2 백엔드 활성화
-3. PowerShell에서 실행:
-
-```powershell
-# Selenium Grid 시작
-docker run -d --name selenium-standalone `
-  -p 4444:4444 --shm-size=2g `
-  selenium/standalone-chrome:latest
+# Selenium Grid 실행 예시
+docker run -d -p 4444:4444 selenium/standalone-chrome
 ```
 
-**주의**: Windows는 `selenium/standalone-chrome` 사용 (Intel/AMD)
-</details>
+## 사용법
 
-#### 2. Companion API 시작
-
-<details>
-<summary><b>🍎 macOS / Linux</b></summary>
-
+### 1. API 서버 시작
 ```bash
-# 환경 변수 설정
-export COMPANION_API_PORT="5001"
-
-# Companion API 백그라운드 실행
-python3 companion_api.py &
+python api/companion_api.py
 ```
-</details>
+- 포트: `5001`
+- API가 http://localhost:5001에서 실행됩니다.
 
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-```powershell
-# 환경 변수 설정
-$env:COMPANION_API_PORT="5001"
-
-# Companion API 백그라운드 실행 (별도 터미널)
-Start-Process python -ArgumentList "companion_api.py"
-```
-</details>
-
-#### 3. 수집 시작
-
-<details>
-<summary><b>🍎 macOS / Linux</b></summary>
-
+### 2. 링크 수집 실행
 ```bash
-# 백그라운드 수집 시작
-python3 collect_global_resume.py > collection.log 2>&1 &
-
-# 로그 확인
-tail -f collection.log
+python collect_links.py
 ```
-</details>
 
-<details>
-<summary><b>🪟 Windows</b></summary>
+수집 스크립트는:
+1. `album_links.db`에서 CDMA 코드가 있는 앨범 읽기
+2. 각 앨범에 대해 Companion API 호출 (`/search` 엔드포인트)
+3. 수집된 링크를 데이터베이스에 저장
+4. 진행 상황을 로그로 출력
 
-```powershell
-# 백그라운드 수집 시작
-Start-Process python -ArgumentList "collect_global_resume.py" `
-  -RedirectStandardOutput collection.log `
-  -RedirectStandardError collection.log
-
-# 로그 확인
-Get-Content collection.log -Wait
+### 3. 진행 상황 확인
+```bash
+# 데이터베이스 확인
+sqlite3 album_links.db "SELECT COUNT(*) FROM album_platform_links WHERE companion_link IS NOT NULL"
 ```
-</details>
 
----
+## API 엔드포인트
 
-## 🏗️ 기술 스택
+### POST `/search`
+앨범의 플랫폼 링크 검색
 
-### 프론트엔드
-- **HTML5 + CSS3** - 시맨틱 마크업
-- **Vanilla JavaScript** - 프레임워크 없는 순수 JS
-- **반응형 디자인** - Mobile-first
-- **모던 UI/UX** - 그라디언트, 애니메이션
+**요청 본문:**
+```json
+{
+  "artist": "아티스트 이름",
+  "album": "앨범 이름",
+  "cdma": "CDMA00001"
+}
+```
 
-### 백엔드
-- **Python 3.10+**
-- **Flask 3.0** - 경량 웹 프레임워크
-- **SQLite3** - 로컬 데이터베이스
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "companion_link": "http://companion.global/catalog/platform/...",
+    "platforms": {
+      "spotify": "https://open.spotify.com/album/...",
+      "apple_music": "https://music.apple.com/album/...",
+      "deezer": "https://www.deezer.com/album/...",
+      ...
+    },
+    "kr_platforms": {
+      "melon": "https://www.melon.com/album/detail.htm?albumId=...",
+      "genie": "https://www.genie.co.kr/detail/albumInfo?axnm=...",
+      ...
+    }
+  },
+  "debug": [...]
+}
+```
 
-### 데이터 수집
-- **Selenium WebDriver** - 웹 자동화
-- **Docker** - Selenium Grid 컨테이너
-- **Companion.global API** - 글로벌 링크 수집
-- **직접 크롤링** - 국내 플랫폼 (Melon, Genie 등)
+## 데이터베이스 스키마
 
----
-
-## 📂 데이터베이스 구조
-
-### 테이블: `album_platform_links`
-
+### album_platform_links
 ```sql
 CREATE TABLE album_platform_links (
-    artist_ko TEXT,           -- 아티스트 한글명
-    artist_en TEXT,           -- 아티스트 영문명
-    album_ko TEXT,            -- 앨범 한글명
-    album_en TEXT,            -- 앨범 영문명
-    album_cover_url TEXT,     -- 앨범 커버 이미지 URL
-    release_date TEXT,        -- 발매일
-    platform_type TEXT,       -- 플랫폼 타입 (국내/글로벌)
-    platform_id TEXT,         -- 플랫폼 ID
-    platform_code TEXT,       -- 플랫폼 코드
-    platform_name TEXT,       -- 플랫폼 이름
-    platform_url TEXT,        -- 플랫폼 링크
-    found INTEGER,            -- 링크 발견 여부 (0/1)
-    created_at TEXT,          -- 생성 시간
-    cdma_code TEXT            -- CDMA 코드
+    cdma_code TEXT NOT NULL,
+    artist_ko TEXT,
+    album_ko TEXT,
+    platform_name TEXT NOT NULL,
+    platform_url TEXT,
+    companion_link TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
----
+## 주요 변경 이력
 
-## 🌐 API 엔드포인트
+### 2025-10-31
+- **CDMA 코드 검색 구현**: 앨범 제목 대신 CDMA 코드로 검색하도록 변경
+- **버그 수정**:
+  - API에서 CDMA 코드 파라미터 추가 (`collect_links.py` line 112)
+  - 검색 쿼리 로직 수정 (`api/companion_api.py` lines 561-566)
+  - Python 캐시 및 포트 충돌 문제 해결
+- **결과 개선**:
+  - 이전: 0개 글로벌 플랫폼 (잘못된 검색 결과)
+  - 현재: 12~13개 글로벌 플랫폼 (정확한 결과)
 
-### 웹 페이지
-- `GET /` - 홈 페이지
-- `GET /search` - 검색 페이지
-- `GET /top100` - TOP 100 페이지
-- `GET /latest` - 최신 발매 페이지
-- `GET /album/:id` - 앨범 상세 페이지
+## 문제 해결
 
-### REST API
-- `GET /api/albums-with-links` - 앨범 목록 (페이지네이션)
-- `GET /api/search` - 앨범 검색
-- `GET /api/top100` - TOP 100 조회
-- `GET /api/latest` - 최신 발매 조회
-- `POST /api/generate-short-url` - 짧은 URL 생성
-- `POST /api/generate-qr` - QR 코드 생성
-
----
-
-## 🔧 환경별 차이점 요약
-
-| 항목 | macOS | Windows |
-|------|-------|---------|
-| **Python 명령어** | `python3` | `python` |
-| **가상환경 활성화** | `source venv/bin/activate` | `venv\Scripts\activate` |
-| **경로 구분자** | `/` | `\` |
-| **Selenium Grid 이미지** | `seleniarm/standalone-chromium` (M1/M2)<br>`selenium/standalone-chrome` (Intel) | `selenium/standalone-chrome` |
-| **백그라운드 실행** | `command &` | `Start-Process` |
-| **환경 변수 설정** | `export VAR="value"` | `$env:VAR="value"` |
-| **로그 확인** | `tail -f log.txt` | `Get-Content log.txt -Wait` |
-
----
-
-## 📊 현재 데이터 현황
-
-- **총 앨범**: 4,400개 이상
-- **수집 진행 중**: 백그라운드 자동 수집
-- **업데이트**: 실시간
-
----
-
-## 🎯 로드맵
-
-### ✅ 완료
-- [x] 웹 UI 구현 (홈, 검색, TOP100, 최신발매)
-- [x] 앨범 상세 페이지
-- [x] 공유 기능 (짧은 URL + QR 코드)
-- [x] 반응형 디자인
-- [x] 데이터 수집 시스템
-- [x] 국내 + 글로벌 플랫폼 통합 수집
-
-### 🔄 진행 중
-- [ ] 데이터 완성 (4,400+ 앨범)
-- [ ] 플랫폼 로고 이미지 추가
-- [ ] 성능 최적화
-
-### 📅 예정
-- [ ] 관리자 페이지
-- [ ] 통계 대시보드
-- [ ] 사용자 피드백 시스템
-
----
-
-## 🤝 기여
-
-이슈 및 PR 환영합니다!
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 라이선스
-
-MIT License - 자유롭게 사용하세요!
-
----
-
-## 🙏 감사
-
-- **[Flask](https://flask.palletsprojects.com)** - 웹 프레임워크
-- **[Selenium](https://www.selenium.dev)** - 웹 자동화
-- **[Docker](https://www.docker.com)** - 컨테이너 플랫폼
-- **[Companion.global](https://companion.global)** - 글로벌 링크 API
-
----
-
-## 📞 문의
-
-- **카카오톡**: [오류제보](https://pf.kakao.com/_azxkPn)
-- **GitHub Issues**: [이슈 생성](https://github.com/yourusername/release-album-link/issues)
-
----
-
-**만든 사람**: Candid Music Entertainment
-**버전**: 3.0.0
-**마지막 업데이트**: 2025-10-29
-
----
-
-## 🚀 빠른 명령어 참고
-
-### 로컬 서버 실행
+### API가 응답하지 않음
 ```bash
-python3 api/index.py
+# 포트 5001이 사용 중인지 확인
+netstat -ano | findstr :5001
+
+# 프로세스 종료
+taskkill /F /PID <프로세스_ID>
+
+# API 재시작
+python api/companion_api.py
 ```
 
-### 데이터 수집 시작
+### Python 캐시 문제
 ```bash
-python3 collect_global_resume.py
+# 캐시 파일 삭제
+find api -name "*.pyc" -delete
+rm -rf api/__pycache__
 ```
 
-### 수집 상태 확인
+### Selenium 연결 오류
 ```bash
-tail -f collection.log
+# Selenium Grid 상태 확인
+curl http://localhost:4444/status
+
+# Grid 재시작
+docker restart <selenium_container_id>
 ```
 
-### 데이터베이스 확인
-```bash
-sqlite3 album_links.db "SELECT COUNT(*) FROM album_platform_links;"
-```
+## 로그
 
----
+로그 파일은 `logs/` 디렉토리에 저장됩니다:
+- `collection_*.log`: 수집 프로세스 로그
+- `companion_api_*.log`: API 서버 로그
 
-**🎵 캔디드뮤직 링크 - 모든 플랫폼의 음악을 한 곳에서**
+## 주의사항
+
+1. **CDMA 코드 필수**: 데이터베이스의 모든 앨범에 CDMA 코드가 있어야 합니다.
+2. **Selenium Grid**: API 실행 전에 Selenium Grid가 실행 중이어야 합니다.
+3. **네트워크**: Companion.global 접근을 위한 안정적인 인터넷 연결이 필요합니다.
+4. **속도 제한**: 너무 많은 요청을 빠르게 보내지 않도록 주의하세요.
+
+## 지원
+
+문제가 발생하면 로그 파일을 확인하고 디버그 정보를 검토하세요.
